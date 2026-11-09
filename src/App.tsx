@@ -22,6 +22,9 @@ import { BottomNavBar, TabType } from './components/BottomNavBar';
 import { RecordsView } from './components/RecordsView';
 import { WordbookView } from './components/WordbookView';
 import { MyPageView } from './components/MyPageView';
+import { LegalPolicyModal, PolicyTab } from './components/LegalPolicyModal';
+import { SiteFooter } from './components/SiteFooter';
+import { AdBannerSlot } from './components/AdBannerSlot';
 import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'politics_crossword_progress_v5';
@@ -109,6 +112,14 @@ export function App() {
     } catch {}
     return 1;
   });
+
+  // Google AdSense & Legal Policy Modal
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState<boolean>(false);
+  const [policyModalTab, setPolicyModalTab] = useState<PolicyTab>('PRIVACY');
+  const handleOpenPolicy = (tab: PolicyTab = 'PRIVACY') => {
+    setPolicyModalTab(tab);
+    setIsPolicyModalOpen(true);
+  };
 
   // Lock notification toast
   const [lockAlertToast, setLockAlertToast] = useState<string | null>(null);
@@ -1121,10 +1132,17 @@ export function App() {
             onOpenTest={() => setIsPlacementTestOpen(true)}
             onOpenAdModal={() => setIsAdModalOpen(true)}
             onOpenCertificate={() => setIsCertificateOpen(true)}
+            onOpenPolicy={handleOpenPolicy}
             onResetProgress={handleResetProgress}
             onDataRestored={handleDataRestored}
           />
         )}
+
+        {/* Google AdSense Responsive Banner Slot */}
+        <AdBannerSlot slotId="crossword_bottom_banner" />
+
+        {/* Global Footer with Google AdSense Compliant Policy Links */}
+        <SiteFooter onOpenPolicy={handleOpenPolicy} />
       </div>
 
       {/* Persistent Mobile Bottom Navigation Bar */}
@@ -1189,6 +1207,13 @@ export function App() {
         isOpen={isCertificateOpen}
         selectedCategory={selectedCategory}
         onClose={() => setIsCertificateOpen(false)}
+      />
+
+      {/* 9. Legal Policies & Google AdSense Compliance Modal */}
+      <LegalPolicyModal
+        isOpen={isPolicyModalOpen}
+        initialTab={policyModalTab}
+        onClose={() => setIsPolicyModalOpen(false)}
       />
     </div>
   );

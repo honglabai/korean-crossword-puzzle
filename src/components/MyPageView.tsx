@@ -23,6 +23,8 @@ import { CategoryId } from '../types/puzzle';
 import { CATEGORIES_META, getCategoryMeta } from '../data/categoryRegistry';
 import { sounds } from '../utils/audio';
 import { exportUserDataJson, importUserDataJson } from '../utils/storageBackup';
+import { PolicyTab } from './LegalPolicyModal';
+import { Shield, FileText, Info, Mail } from 'lucide-react';
 
 interface MyPageViewProps {
   currentLevel: number;
@@ -39,6 +41,7 @@ interface MyPageViewProps {
   onOpenTest: () => void;
   onOpenAdModal: () => void;
   onOpenCertificate: () => void;
+  onOpenPolicy?: (tab: PolicyTab) => void;
   onResetProgress: () => void;
   onDataRestored?: () => void;
 }
@@ -58,6 +61,7 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
   onOpenTest,
   onOpenAdModal,
   onOpenCertificate,
+  onOpenPolicy,
   onResetProgress,
   onDataRestored,
 }) => {
@@ -495,7 +499,65 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
         </div>
       </div>
 
-      {/* 7. Danger Zone: Reset Progress */}
+      {/* 7. Legal Policies & Service Information (Google AdSense Compliance) */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Shield className="w-4 h-4 text-[#0288d1]" />
+          <h3 className="text-sm font-black text-slate-800">서비스 정책 및 이용 안내</h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onOpenPolicy?.('PRIVACY')}
+            className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-left transition flex items-center justify-between cursor-pointer"
+          >
+            <div>
+              <div className="text-xs font-black text-slate-800">개인정보처리방침</div>
+              <div className="text-[10px] text-slate-400">Google AdSense 및 쿠키 정책 준수</div>
+            </div>
+            <Shield className="w-4 h-4 text-blue-500 shrink-0" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenPolicy?.('TERMS')}
+            className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-left transition flex items-center justify-between cursor-pointer"
+          >
+            <div>
+              <div className="text-xs font-black text-slate-800">서비스 이용약관</div>
+              <div className="text-[10px] text-slate-400">이용 권리 및 책임 안내</div>
+            </div>
+            <FileText className="w-4 h-4 text-slate-500 shrink-0" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenPolicy?.('ABOUT')}
+            className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-left transition flex items-center justify-between cursor-pointer"
+          >
+            <div>
+              <div className="text-xs font-black text-slate-800">서비스 및 팀 소개</div>
+              <div className="text-[10px] text-slate-400">8대 지식 영역 교육 비전</div>
+            </div>
+            <Info className="w-4 h-4 text-emerald-500 shrink-0" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenPolicy?.('CONTACT')}
+            className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-left transition flex items-center justify-between cursor-pointer"
+          >
+            <div>
+              <div className="text-xs font-black text-slate-800">문의 및 피드백</div>
+              <div className="text-[10px] text-slate-400">오류 제보 및 제휴 문의</div>
+            </div>
+            <Mail className="w-4 h-4 text-indigo-500 shrink-0" />
+          </button>
+        </div>
+      </div>
+
+      {/* 8. Danger Zone: Reset Progress */}
       <div className="bg-rose-50/80 rounded-2xl border border-rose-200 p-4 flex items-center justify-between">
         <div>
           <span className="text-xs font-black text-rose-800 block">진행 데이터 초기화</span>

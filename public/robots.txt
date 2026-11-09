@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Google AdSense Crawler
+User-agent: Mediapartners-Google
+Allow: /
+
+# Google Search Engine Crawler
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://korean-crossword-puzzle.vercel.app/sitemap.xml
