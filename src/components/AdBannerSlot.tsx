@@ -41,7 +41,7 @@ export const AdBannerSlot: React.FC<AdBannerSlotProps> = ({
         <ins
           className="adsbygoogle"
           style={{ display: 'block' }}
-          data-ad-client="ca-pub-0000000000000000"
+          data-ad-client="ca-pub-8675047967209162"
           data-ad-slot={slotId}
           data-ad-format={format}
           data-full-width-responsive="true"

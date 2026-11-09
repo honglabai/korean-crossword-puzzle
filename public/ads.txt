@@ -1,3 +1,1 @@
-# Google AdSense ads.txt
-# 구글 애드센스 승인 후 발급받으신 게시자 ID(pub-XXXXXXXXXXXXXXXX)로 변경하시면 됩니다.
-google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+google.com, pub-8675047967209162, DIRECT, f08c47fec0942fa0
