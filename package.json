@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sudoku:dev": "npm --prefix my-love-sudoku run dev",
+    "sudoku:build": "npm --prefix my-love-sudoku run build",
+    "sudoku:test": "npm --prefix my-love-sudoku test"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
