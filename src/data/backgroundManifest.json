@@ -1,0 +1,202 @@
+{
+  "1": [
+    {
+      "id": "lv1_1",
+      "url": "/backgrounds/lv1_1.webp",
+      "name": "햇살 비치는 민주주의 광장",
+      "sizeKb": 6.2
+    },
+    {
+      "id": "lv1_2",
+      "url": "/backgrounds/lv1_2.webp",
+      "name": "헌법 제1조 시민의 서재",
+      "sizeKb": 5.3
+    },
+    {
+      "id": "lv1_3",
+      "url": "/backgrounds/lv1_3.webp",
+      "name": "희망찬 투표소 파빌리온",
+      "sizeKb": 5.8
+    }
+  ],
+  "2": [
+    {
+      "id": "lv2_1",
+      "url": "/backgrounds/lv2_1.webp",
+      "name": "국회 본회의장 원형 돔",
+      "sizeKb": 6.0
+    },
+    {
+      "id": "lv2_2",
+      "url": "/backgrounds/lv2_2.webp",
+      "name": "상임위원회 심사 회의실",
+      "sizeKb": 6.0
+    },
+    {
+      "id": "lv2_3",
+      "url": "/backgrounds/lv2_3.webp",
+      "name": "국회도서관 중앙 회랑",
+      "sizeKb": 5.9
+    }
+  ],
+  "3": [
+    {
+      "id": "lv3_1",
+      "url": "/backgrounds/lv3_1.webp",
+      "name": "헌법재판소 대심판정 회랑",
+      "sizeKb": 5.6
+    },
+    {
+      "id": "lv3_2",
+      "url": "/backgrounds/lv3_2.webp",
+      "name": "삼권분립 대리석 아치",
+      "sizeKb": 5.5
+    },
+    {
+      "id": "lv3_3",
+      "url": "/backgrounds/lv3_3.webp",
+      "name": "정의의 전당 열주랑",
+      "sizeKb": 5.7
+    }
+  ],
+  "4": [
+    {
+      "id": "lv4_1",
+      "url": "/backgrounds/lv4_1.webp",
+      "name": "선거 종합상황실",
+      "sizeKb": 6.0
+    },
+    {
+      "id": "lv4_2",
+      "url": "/backgrounds/lv4_2.webp",
+      "name": "정당 전당대회 메인홀",
+      "sizeKb": 5.2
+    },
+    {
+      "id": "lv4_3",
+      "url": "/backgrounds/lv4_3.webp",
+      "name": "공천 관리 정책 집무실",
+      "sizeKb": 6.0
+    }
+  ],
+  "5": [
+    {
+      "id": "lv5_1",
+      "url": "/backgrounds/lv5_1.webp",
+      "name": "세계 의회 비교정치 서고",
+      "sizeKb": 6.0
+    },
+    {
+      "id": "lv5_2",
+      "url": "/backgrounds/lv5_2.webp",
+      "name": "정치철학 고전 아카데미",
+      "sizeKb": 5.9
+    },
+    {
+      "id": "lv5_3",
+      "url": "/backgrounds/lv5_3.webp",
+      "name": "비교 거버넌스 열람실",
+      "sizeKb": 6.1
+    }
+  ],
+  "6": [
+    {
+      "id": "lv6_1",
+      "url": "/backgrounds/lv6_1.webp",
+      "name": "의사봉과 법률안 의장석",
+      "sizeKb": 5.9
+    },
+    {
+      "id": "lv6_2",
+      "url": "/backgrounds/lv6_2.webp",
+      "name": "국정감사 대청문회장",
+      "sizeKb": 5.8
+    },
+    {
+      "id": "lv6_3",
+      "url": "/backgrounds/lv6_3.webp",
+      "name": "법제사법위원회 심사실",
+      "sizeKb": 5.5
+    }
+  ],
+  "7": [
+    {
+      "id": "lv7_1",
+      "url": "/backgrounds/lv7_1.webp",
+      "name": "다자간 정상외교 라운지",
+      "sizeKb": 5.9
+    },
+    {
+      "id": "lv7_2",
+      "url": "/backgrounds/lv7_2.webp",
+      "name": "국제연합 평화의 전당",
+      "sizeKb": 5.9
+    },
+    {
+      "id": "lv7_3",
+      "url": "/backgrounds/lv7_3.webp",
+      "name": "역사적 조약 비준 집무실",
+      "sizeKb": 5.9
+    }
+  ],
+  "8": [
+    {
+      "id": "lv8_1",
+      "url": "/backgrounds/lv8_1.webp",
+      "name": "계몽주의 사회계약론 서재",
+      "sizeKb": 5.7
+    },
+    {
+      "id": "lv8_2",
+      "url": "/backgrounds/lv8_2.webp",
+      "name": "아테네 아고라 민주주의 회랑",
+      "sizeKb": 6.1
+    },
+    {
+      "id": "lv8_3",
+      "url": "/backgrounds/lv8_3.webp",
+      "name": "현대 숙의민주주의 공론장",
+      "sizeKb": 5.8
+    }
+  ],
+  "9": [
+    {
+      "id": "lv9_1",
+      "url": "/backgrounds/lv9_1.webp",
+      "name": "선거행태 빅데이터 분석실",
+      "sizeKb": 6.0
+    },
+    {
+      "id": "lv9_2",
+      "url": "/backgrounds/lv9_2.webp",
+      "name": "신제도주의 정책 아카이브",
+      "sizeKb": 5.5
+    },
+    {
+      "id": "lv9_3",
+      "url": "/backgrounds/lv9_3.webp",
+      "name": "합리적 선택 게임이론 연구실",
+      "sizeKb": 5.8
+    }
+  ],
+  "10": [
+    {
+      "id": "lv10_1",
+      "url": "/backgrounds/lv10_1.webp",
+      "name": "대통령 기록관 헌정의 전당",
+      "sizeKb": 6.0
+    },
+    {
+      "id": "lv10_2",
+      "url": "/backgrounds/lv10_2.webp",
+      "name": "정치학 석학 최고 평의회",
+      "sizeKb": 5.7
+    },
+    {
+      "id": "lv10_3",
+      "url": "/backgrounds/lv10_3.webp",
+      "name": "최고 헌법 평의원 회의장",
+      "sizeKb": 6.0
+    }
+  ]
+}
