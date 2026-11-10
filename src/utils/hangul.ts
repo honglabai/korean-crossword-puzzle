@@ -348,3 +348,54 @@ export function combineHangulInput(
   // Fallback
   return { currentCell: trimmed, shouldAdvance: isCompleteSyllable(trimmed) };
 }
+
+export type CellValidationStatus = 'empty' | 'correct' | 'incorrect' | 'composing';
+
+/**
+ * Checks real-time correctness of a user-entered character against the solution character:
+ * - 'empty': no character entered
+ * - 'correct': entered character matches solutionChar
+ * - 'composing': entered character is an in-progress prefix of solutionChar (e.g. 'ㅁ' for '민', '호' for '화', '미' for '민')
+ * - 'incorrect': entered character does not match and cannot form solutionChar
+ */
+export function checkCellStatus(userChar: string, solutionChar: string): CellValidationStatus {
+  if (!userChar) return 'empty';
+  if (!solutionChar) return 'empty';
+  if (userChar === solutionChar) return 'correct';
+
+  const solDec = decompose(solutionChar);
+
+  // If user entered a single consonant (e.g. 'ㅁ' when solution is '민')
+  if (isConsonant(userChar)) {
+    if (solDec && userChar === solDec.cho) {
+      return 'composing';
+    }
+    return 'incorrect';
+  }
+
+  // If user entered a complete syllable (e.g. '미' or '호')
+  if (isCompleteSyllable(userChar)) {
+    if (solDec) {
+      const userDec = decompose(userChar);
+      if (userDec && userDec.cho === solDec.cho) {
+        // 1. Vowel prefix for compound vowel: e.g. '호' for '화'
+        if (isVowelPrefix(userDec.jung, solDec.jung) && !userDec.jong) {
+          return 'composing';
+        }
+        // 2. Chosung and Jung match, but solution needs a final consonant (받침): e.g. '미' for '민', '구' for '국'
+        if (userDec.jung === solDec.jung && solDec.jong && !userDec.jong) {
+          return 'composing';
+        }
+        // 3. User entered first consonant of compound final consonant: e.g. '갑' for '값'
+        if (userDec.jung === solDec.jung && isJongPrefix(userDec.jong, solDec.jong)) {
+          return 'composing';
+        }
+      }
+    }
+    return 'incorrect';
+  }
+
+  // Any other character (alphanumeric, symbols)
+  return userChar === solutionChar ? 'correct' : 'incorrect';
+}
+

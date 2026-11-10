@@ -395,6 +395,19 @@ export function App() {
     return completed;
   }, [board.placedWords, userGrid]);
 
+  // Unique syllables from current puzzle words for mobile quick keypad
+  const puzzleLetters = useMemo(() => {
+    const set = new Set<string>();
+    board.placedWords.forEach((pw) => {
+      for (const char of pw.term) {
+        if (isCompleteSyllable(char)) {
+          set.add(char);
+        }
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'ko'));
+  }, [board.placedWords]);
+
   // Handle cell click
   const handleCellClick = (r: number, c: number) => {
     const cell = board.grid[r][c];
@@ -659,6 +672,23 @@ export function App() {
     }
 
     setUserGrid(newGrid);
+
+    // Play word complete sound if active word was just finished
+    if (activeWord && !completedWordIds.has(activeWord.id)) {
+      let isWordMatch = true;
+      for (let i = 0; i < activeWord.length; i++) {
+        const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
+        const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
+        if (newGrid[wr]?.[wc] !== activeWord.term[i]) {
+          isWordMatch = false;
+          break;
+        }
+      }
+      if (isWordMatch) {
+        sounds.playWordComplete();
+      }
+    }
+
     checkBoardCompletion(newGrid);
   };
 
@@ -1073,6 +1103,7 @@ export function App() {
                     onPrevWord={handlePrevWord}
                     onNextWord={handleNextWord}
                     isCompleted={activeWord ? completedWordIds.has(activeWord.id) : false}
+                    userGrid={userGrid}
                   />
 
                   {/* In-game helper controls */}
@@ -1087,6 +1118,7 @@ export function App() {
                     />
                     <VirtualHangulKeypad
                       currentCellChar={selectedCellChar}
+                      puzzleLetters={puzzleLetters}
                       onInputChar={(char) => {
                         if (selectedCell) {
                           handleCellInput(selectedCell.row, selectedCell.col, char);

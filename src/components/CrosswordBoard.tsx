@@ -2,6 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { BoardData, Direction, PlacedWord } from '../types/puzzle';
 import { ColorTheme } from '../types/theme';
 import { sounds } from '../utils/audio';
+import { checkCellStatus } from '../utils/hangul';
+import { Check, X } from 'lucide-react';
 
 interface CrosswordBoardProps {
   board: BoardData;
@@ -158,14 +160,51 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
               const userVal = userGrid[r]?.[c] || '';
 
               if (!cell.isActive) {
-                // Inactive cell: 50% opacity translucent window showing the custom background image!
+                // Inactive cell: Obsidian glass tile exposing background artwork
                 return (
                   <div
                     key={cellKey}
-                    className="w-full h-full bg-slate-900/50 backdrop-blur-[0.5px] transition-colors rounded-[2px]"
+                    className="w-full h-full bg-slate-900/60 backdrop-blur-[2px] transition-colors rounded-[5px] sm:rounded-[7px] border border-white/5"
                   />
                 );
               }
+
+              // Real-time answer validation status
+              const valStatus = checkCellStatus(userVal, cell.solutionChar || '');
+              const isCharCorrect = valStatus === 'correct';
+              const isCharIncorrect =
+                (userVal !== '' && (valStatus === 'incorrect' || (!isSelected && valStatus === 'composing'))) ||
+                isWrong;
+
+              // Compute cell style
+              let cellStyle = 'bg-white hover:bg-slate-50 border border-slate-200/90 shadow-2xs';
+              if (isSelected) {
+                if (isCharCorrect) {
+                  cellStyle = 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-400 shadow-md scale-[1.03] z-20';
+                } else if (isCharIncorrect) {
+                  cellStyle = 'bg-rose-50 text-rose-700 border-2 border-rose-400 ring-2 ring-rose-400 shadow-md scale-[1.03] z-20';
+                } else {
+                  cellStyle = `${theme.focusedCell} z-20 scale-[1.03] shadow-md ring-2 ring-blue-500 border border-blue-400`;
+                }
+              } else if (isCharCorrect) {
+                cellStyle = 'bg-emerald-50/95 text-emerald-800 border border-emerald-300 shadow-2xs hover:bg-emerald-100/70';
+              } else if (isCharIncorrect) {
+                cellStyle = 'bg-rose-50/95 text-rose-600 border border-rose-300 shadow-2xs hover:bg-rose-100/70';
+              } else if (inActiveWord) {
+                cellStyle = `${theme.activeWordHighlight} border border-amber-300/80 hover:bg-amber-100/90 shadow-2xs`;
+              }
+
+              const letterTextColor = isCharCorrect
+                ? 'text-emerald-800 font-black'
+                : isCharIncorrect
+                ? 'text-rose-600 font-black'
+                : 'text-slate-800 font-black';
+
+              const inputStyle = isCharCorrect
+                ? 'caret-emerald-600 text-emerald-900'
+                : isCharIncorrect
+                ? 'caret-rose-600 text-rose-700'
+                : 'caret-blue-600 text-slate-900';
 
               // Active cell: Direct in-cell text input
               return (
@@ -175,20 +214,42 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                     sounds.playKey();
                     onCellClick(r, c);
                   }}
-                  className={`relative flex items-center justify-center cursor-pointer transition-all duration-150 font-bold rounded-[3px] select-none ${
-                    isSelected
-                      ? `${theme.focusedCell} z-20 scale-102 shadow-md ring-2 ring-blue-500`
-                      : inActiveWord
-                      ? theme.activeWordHighlight
-                      : 'bg-white hover:bg-slate-50'
-                  } ${isWrong ? 'bg-red-100 text-red-600 ring-2 ring-red-400' : ''}`}
+                  className={`relative flex items-center justify-center cursor-pointer transition-all duration-150 font-bold rounded-[5px] sm:rounded-[7px] select-none ${cellStyle}`}
                 >
                   {/* Top-Left Circled Number Badge */}
                   {cell.startNumberText && (
                     <span
-                      className={`absolute top-[1px] left-[2px] leading-none font-black pointer-events-none z-10 ${theme.numberColor} ${getNumberFontSize()}`}
+                      className={`absolute top-[1.5px] left-[2px] leading-none font-black pointer-events-none z-10 ${
+                        isCharCorrect
+                          ? 'text-emerald-700/80'
+                          : isCharIncorrect
+                          ? 'text-rose-600/80'
+                          : theme.numberColor
+                      } ${getNumberFontSize()}`}
                     >
                       {cell.startNumberText}
+                    </span>
+                  )}
+
+                  {/* Top-Right Real-Time Validation Indicator Badge */}
+                  {isCharCorrect && (
+                    <span
+                      className={`absolute top-[1.5px] right-[2px] rounded-full bg-emerald-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
+                        size <= 9 ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' : 'w-2.5 h-2.5 sm:w-3 sm:h-3'
+                      }`}
+                      title="정답"
+                    >
+                      <Check className="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[3.5]" />
+                    </span>
+                  )}
+                  {isCharIncorrect && (
+                    <span
+                      className={`absolute top-[1.5px] right-[2px] rounded-full bg-rose-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
+                        size <= 9 ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' : 'w-2.5 h-2.5 sm:w-3 sm:h-3'
+                      }`}
+                      title="오답"
+                    >
+                      <X className="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[3.5]" />
                     </span>
                   )}
 
@@ -206,11 +267,11 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                       autoCapitalize="off"
                       autoCorrect="off"
                       spellCheck="false"
-                      className={`w-full h-full text-center font-black text-slate-900 bg-transparent outline-none caret-blue-600 p-0 m-0 cursor-text select-all ${getLetterFontSize()}`}
+                      className={`w-full h-full text-center font-black bg-transparent outline-none p-0 m-0 cursor-text select-all ${getLetterFontSize()} ${inputStyle}`}
                       style={{ fontSize: getInputPixelFontSize() }}
                     />
                   ) : userVal ? (
-                    <span className={`leading-none pointer-events-none ${getLetterFontSize()} text-slate-800`}>
+                    <span className={`leading-none pointer-events-none ${getLetterFontSize()} ${letterTextColor}`}>
                       {userVal}
                     </span>
                   ) : hasChosung && cell.chosungChar ? (

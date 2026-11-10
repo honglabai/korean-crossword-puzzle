@@ -29,6 +29,7 @@ interface ActiveClueCardProps {
   onPrevWord: () => void;
   onNextWord: () => void;
   isCompleted: boolean;
+  userGrid?: string[][];
 }
 
 export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
@@ -44,6 +45,7 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
   onPrevWord,
   onNextWord,
   isCompleted,
+  userGrid,
 }) => {
   const [showDetailedContext, setShowDetailedContext] = useState<boolean>(false);
 
@@ -51,13 +53,24 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
 
   const contextText = getWordContext(activeWord.term, activeWord.definition, selectedCategory);
 
+  // Calculate real-time letter completion for this active word
+  let correctCount = 0;
+  if (activeWord && userGrid) {
+    for (let i = 0; i < activeWord.length; i++) {
+      const r = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
+      const c = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
+      const ch = userGrid[r]?.[c] || '';
+      if (ch === activeWord.term[i]) correctCount++;
+    }
+  }
+
   return (
     <div
-      className={`w-full max-w-[480px] my-2 p-3 sm:p-3.5 rounded-2xl bg-white/95 backdrop-blur-md border-2 shadow-md transition-all duration-150 animate-in fade-in slide-in-from-top-1 ${theme.boardBorder}`}
+      className={`w-full max-w-[480px] my-2 p-3 sm:p-4 rounded-2xl bg-white/95 backdrop-blur-md border-2 shadow-md transition-all duration-150 animate-in fade-in slide-in-from-top-1 ${theme.boardBorder}`}
     >
       {/* Top Header of Clue Card */}
-      <div className="flex items-center justify-between gap-2 mb-1.5 pb-1.5 border-b border-slate-100 flex-wrap">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {/* Circled Number */}
           <span className={`font-black ${theme.numberColor} ${isLargeFont ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'}`}>
             {activeWord.clueNumberText}
@@ -73,8 +86,12 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
             }}
             disabled={!isIntersection}
             className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold text-white transition active:scale-95 ${
-              activeDirection === 'across' ? 'bg-[#0288d1]' : 'bg-[#7b1fa2]'
-            } ${isIntersection ? 'cursor-pointer hover:opacity-90 ring-1 ring-white/50' : 'cursor-default'}`}
+              isIntersection
+                ? 'bg-gradient-to-r from-[#0288d1] to-[#7b1fa2] hover:opacity-95 shadow-2xs cursor-pointer ring-1 ring-white/60'
+                : activeDirection === 'across'
+                ? 'bg-[#0288d1] cursor-default'
+                : 'bg-[#7b1fa2] cursor-default'
+            }`}
             title={isIntersection ? '클릭하여 가로/세로 방향 전환' : '현재 단어 방향'}
           >
             {activeDirection === 'across' ? (
@@ -88,18 +105,26 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
                 <span>세로</span>
               </>
             )}
-            {isIntersection && <RefreshCw className="w-2.5 h-2.5 opacity-80 ml-0.5" />}
+            {isIntersection && (
+              <>
+                <span className="text-[10px] opacity-90">⇄</span>
+                <RefreshCw className="w-2.5 h-2.5 opacity-90 animate-spin-slow" />
+              </>
+            )}
           </button>
 
-          {/* Word Length */}
-          <span className={`font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md ${isLargeFont ? 'text-xs' : 'text-[11px]'}`}>
-            {activeWord.length}글자
-          </span>
-
-          {/* Completed Badge */}
-          {isCompleted && (
-            <span className="text-[11px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+          {/* Progress / Word Length Badge */}
+          {isCompleted ? (
+            <span className="text-[11px] font-black text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-300 shadow-2xs">
               ✓ 완성됨
+            </span>
+          ) : correctCount > 0 ? (
+            <span className="text-[11px] font-bold text-sky-800 bg-sky-100/80 px-2 py-0.5 rounded-md border border-sky-300 shadow-2xs">
+              {correctCount} / {activeWord.length}글자 정답
+            </span>
+          ) : (
+            <span className={`font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 ${isLargeFont ? 'text-xs' : 'text-[11px]'}`}>
+              {activeWord.length}글자
             </span>
           )}
         </div>
@@ -112,7 +137,7 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
               sounds.playHint();
               onRequestHint();
             }}
-            className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs cursor-pointer"
             title="초성 힌트 보기"
           >
             <Lightbulb className="w-3.5 h-3.5 text-amber-500 fill-amber-300" />
@@ -126,29 +151,14 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
             </span>
           </button>
 
-          {/* Direction Toggle button when at an intersection */}
-          {isIntersection && (
-            <button
-              onClick={() => {
-                sounds.playKey();
-                onToggleDirection();
-              }}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs"
-              title="가로/세로 방향 전환"
-            >
-              <RefreshCw className="w-3 h-3 text-slate-600" />
-              <span className="text-[11px]">방향 전환</span>
-            </button>
-          )}
-
           {/* Prev/Next Clue Navigation */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+          <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 shadow-2xs">
             <button
               onClick={() => {
                 sounds.playKey();
                 onPrevWord();
               }}
-              className="p-1 text-slate-600 hover:text-slate-900 rounded-md hover:bg-white transition"
+              className="p-1 text-slate-600 hover:text-slate-900 rounded-md hover:bg-white transition cursor-pointer"
               title="이전 단어"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -158,7 +168,7 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
                 sounds.playKey();
                 onNextWord();
               }}
-              className="p-1 text-slate-600 hover:text-slate-900 rounded-md hover:bg-white transition"
+              className="p-1 text-slate-600 hover:text-slate-900 rounded-md hover:bg-white transition cursor-pointer"
               title="다음 단어"
             >
               <ChevronRight className="w-4 h-4" />
