@@ -1,0 +1,34 @@
+{
+  "name": "지식 탐구 가로세로 낱말퍼즐",
+  "short_name": "낱말퍼즐",
+  "description": "대한민국 8대 지식 영역 2,480개 어휘와 240개 관문 십자말풀이, 상식 백과사전 웹 애플리케이션",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f0f9ff",
+  "theme_color": "#0288d1",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "education", "puzzle"],
+  "lang": "ko",
+  "dir": "ltr"
+}

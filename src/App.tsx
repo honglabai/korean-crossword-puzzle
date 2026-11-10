@@ -26,6 +26,8 @@ import { LegalPolicyModal, PolicyTab } from './components/LegalPolicyModal';
 import { SiteFooter } from './components/SiteFooter';
 import { AdBannerSlot } from './components/AdBannerSlot';
 import { KnowledgeArticleHub } from './components/KnowledgeArticleHub';
+import { InstallAppModal } from './components/InstallAppModal';
+import { usePWAInstall } from './utils/usePWAInstall';
 import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'politics_crossword_progress_v5';
@@ -242,6 +244,8 @@ export function App() {
   const [isPlacementTestOpen, setIsPlacementTestOpen] = useState<boolean>(false);
   const [isChosungModalOpen, setIsChosungModalOpen] = useState<boolean>(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState<boolean>(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
+  const pwa = usePWAInstall();
 
   const [levelUpModal, setLevelUpModal] = useState<{
     isOpen: boolean;
@@ -944,6 +948,7 @@ export function App() {
           onSelectTheme={(themeId) => setUserThemeId(themeId)}
           onOpenTest={() => setIsPlacementTestOpen(true)}
           onOpenCategoryModal={() => setIsCategoryModalOpen(true)}
+          onOpenInstallModal={() => setIsInstallModalOpen(true)}
           isMuted={isMuted}
           onToggleSound={() => {
             sounds.isMuted = !isMuted;
@@ -1194,6 +1199,7 @@ export function App() {
             onOpenTest={() => setIsPlacementTestOpen(true)}
             onOpenAdModal={() => setIsAdModalOpen(true)}
             onOpenCertificate={() => setIsCertificateOpen(true)}
+            onOpenInstallModal={() => setIsInstallModalOpen(true)}
             onOpenPolicy={handleOpenPolicy}
             onResetProgress={handleResetProgress}
             onDataRestored={handleDataRestored}
@@ -1278,6 +1284,15 @@ export function App() {
         isOpen={isPolicyModalOpen}
         initialTab={policyModalTab}
         onClose={() => setIsPolicyModalOpen(false)}
+      />
+
+      {/* 10. PWA App Install Modal with Real App Icon */}
+      <InstallAppModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        onInstall={pwa.promptInstall}
+        isIOS={pwa.isIOS}
+        isInstalled={pwa.isInstalled}
       />
     </div>
   );

@@ -41,6 +41,7 @@ interface MyPageViewProps {
   onOpenTest: () => void;
   onOpenAdModal: () => void;
   onOpenCertificate: () => void;
+  onOpenInstallModal?: () => void;
   onOpenPolicy?: (tab: PolicyTab) => void;
   onResetProgress: () => void;
   onDataRestored?: () => void;
@@ -61,6 +62,7 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
   onOpenTest,
   onOpenAdModal,
   onOpenCertificate,
+  onOpenInstallModal,
   onOpenPolicy,
   onResetProgress,
   onDataRestored,
@@ -403,6 +405,39 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
           테스트 응시
         </button>
       </div>
+
+      {/* 5-B. App Installation & Home Screen Icon */}
+      {onOpenInstallModal && (
+        <div className="bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 rounded-3xl border border-sky-200 p-5 shadow-xs mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3.5">
+            <img
+              src="/icon-192.png"
+              alt="앱 아이콘"
+              className="w-14 h-14 rounded-2xl shadow-md border border-white shrink-0 object-cover"
+            />
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-black text-slate-900">홈 화면에 낱말퍼즐 앱 설치</span>
+                <span className="text-[10px] font-black px-2 py-0.5 bg-[#0288d1] text-white rounded-full">PWA</span>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                스마트폰 및 PC 홈 화면에 전용 앱 아이콘을 추가하여 언제든 바로 실행하세요.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              sounds.playKey();
+              onOpenInstallModal();
+            }}
+            className="w-full sm:w-auto px-4 py-2.5 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-xl shadow-xs transition shrink-0 cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>앱 설치</span>
+          </button>
+        </div>
+      )}
 
       {/* 6. Game Preferences & Accessibility */}
       <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm mb-4">

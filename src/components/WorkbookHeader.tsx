@@ -15,6 +15,7 @@ interface WorkbookHeaderProps {
   onSelectTheme: (themeId: ThemeId) => void;
   onOpenTest: () => void;
   onOpenCategoryModal?: () => void;
+  onOpenInstallModal?: () => void;
   isMuted: boolean;
   onToggleSound: () => void;
 }
@@ -29,6 +30,7 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({
   onSelectTheme,
   onOpenTest,
   onOpenCategoryModal,
+  onOpenInstallModal,
   isMuted,
   onToggleSound,
 }) => {
@@ -127,6 +129,21 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({
               {dayName}
             </span>
           </div>
+
+          {/* App Install Button with Real Icon */}
+          {onOpenInstallModal && (
+            <button
+              onClick={() => {
+                sounds.playKey();
+                onOpenInstallModal();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-full shadow-xs text-xs font-black transition cursor-pointer active:scale-95 border border-sky-400"
+              title="홈 화면에 낱말퍼즐 앱 설치하기"
+            >
+              <img src="/favicon-32x32.png" alt="" className="w-3.5 h-3.5 rounded-md" />
+              <span>앱 설치</span>
+            </button>
+          )}
 
           {/* Theme Selector Dropdown */}
           <div className="relative group">
