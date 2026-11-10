@@ -25,6 +25,7 @@ import { MyPageView } from './components/MyPageView';
 import { LegalPolicyModal, PolicyTab } from './components/LegalPolicyModal';
 import { SiteFooter } from './components/SiteFooter';
 import { AdBannerSlot } from './components/AdBannerSlot';
+import { KnowledgeArticleHub } from './components/KnowledgeArticleHub';
 import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'politics_crossword_progress_v5';
@@ -237,8 +238,8 @@ export function App() {
     return new Set<string>();
   });
 
-  // Modals
-  const [isPlacementTestOpen, setIsPlacementTestOpen] = useState<boolean>(!isTested);
+  // Modals - Do NOT auto-open on initial page load (prevents AdSense alert screen violation)
+  const [isPlacementTestOpen, setIsPlacementTestOpen] = useState<boolean>(false);
   const [isChosungModalOpen, setIsChosungModalOpen] = useState<boolean>(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState<boolean>(false);
 
@@ -1003,6 +1004,38 @@ export function App() {
               }}
             />
 
+            {/* Friendly Non-intrusive Placement Test Invitation (does NOT pop up automatically) */}
+            {!isTested && (
+              <aside
+                aria-label="어휘 진단 테스트 안내"
+                className="max-w-6xl mx-auto px-3 sm:px-4 my-2.5"
+              >
+                <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 border border-sky-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-700">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl p-2 bg-white rounded-xl shadow-2xs border border-sky-100">🎯</span>
+                    <div>
+                      <p className="text-xs sm:text-sm font-black text-slate-800">
+                        나의 어휘력에 딱 맞는 레벨이 궁금하신가요?
+                      </p>
+                      <p className="text-[11px] sm:text-xs text-slate-500 font-normal mt-0.5">
+                        5문항의 1분 진단 테스트로 실력을 검증하고 추천 레벨을 즉시 해금할 수 있습니다.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sounds.playKey();
+                      setIsPlacementTestOpen(true);
+                    }}
+                    className="w-full sm:w-auto px-4 py-2 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-xl shadow-xs transition shrink-0 cursor-pointer text-center"
+                  >
+                    진단 테스트 시작
+                  </button>
+                </div>
+              </aside>
+            )}
+
             {/* 3. Main Play Area */}
             <main className="max-w-6xl mx-auto px-3 sm:px-4 mt-1 pb-24">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -1083,7 +1116,36 @@ export function App() {
                 </div>
               </div>
             </main>
+
+            {/* High-Value Publisher Content: 8대 분야 시사·교양 심층 지식 백과 & 상식 학습 칼럼 */}
+            <section className="max-w-6xl mx-auto px-3 sm:px-4 my-6" aria-label="8대 지식 탐구 백과">
+              <KnowledgeArticleHub
+                initialCategory={selectedCategory}
+                onSelectCategoryForPuzzle={(catId) => {
+                  handleSelectCategory(catId);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                showAdInside={false}
+              />
+            </section>
           </>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 2: KNOWLEDGE (지식백과 - 8대 영역 심층 칼럼 및 용어 사전) */}
+        {/* ============================================================== */}
+        {activeTab === 'KNOWLEDGE' && (
+          <main className="max-w-6xl mx-auto px-3 sm:px-4 mt-2 pb-24">
+            <KnowledgeArticleHub
+              initialCategory={selectedCategory}
+              onSelectCategoryForPuzzle={(catId) => {
+                handleSelectCategory(catId);
+                setActiveTab('CHALLENGE');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              showAdInside={true}
+            />
+          </main>
         )}
 
         {/* ============================================================== */}
@@ -1138,8 +1200,10 @@ export function App() {
           />
         )}
 
-        {/* Google AdSense Responsive Banner Slot */}
-        <AdBannerSlot slotId="crossword_bottom_banner" />
+        {/* Google AdSense Responsive Banner Slot (Rendered alongside rich publisher content) */}
+        {activeTab !== 'KNOWLEDGE' && (
+          <AdBannerSlot slotId="crossword_bottom_banner" />
+        )}
 
         {/* Global Footer with Google AdSense Compliant Policy Links */}
         <SiteFooter onOpenPolicy={handleOpenPolicy} />

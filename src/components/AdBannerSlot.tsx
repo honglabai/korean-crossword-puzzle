@@ -12,13 +12,16 @@ export const AdBannerSlot: React.FC<AdBannerSlotProps> = ({
   className = '',
 }) => {
   const adRef = useRef<HTMLElement>(null);
+  const hasPushed = useRef(false);
 
   useEffect(() => {
+    if (hasPushed.current) return;
     try {
       if (typeof window !== 'undefined') {
         const w = window as unknown as { adsbygoogle?: unknown[] };
         w.adsbygoogle = w.adsbygoogle || [];
         w.adsbygoogle.push({});
+        hasPushed.current = true;
       }
     } catch {
       // AdSense script may be blocked by ad blockers or not yet loaded
