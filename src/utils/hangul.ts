@@ -15,8 +15,8 @@ export const JONG_LIST = [
   'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
 ];
 
-// Complex Vowel Combinations (이중모음)
-const COMPLEX_VOWELS: Record<string, string> = {
+// Complex Vowel Combinations (이중모음 결합 규칙)
+export const COMPLEX_VOWELS: Record<string, string> = {
   'ㅗㅏ': 'ㅘ',
   'ㅗㅐ': 'ㅙ',
   'ㅗㅣ': 'ㅚ',
@@ -30,7 +30,20 @@ const COMPLEX_VOWELS: Record<string, string> = {
   'ㅑㅣ': 'ㅒ',
 };
 
-// Complex Final Consonants (겹받침)
+// Vowel Prefix Map: Vowels that can form compound vowels upon subsequent vowel keystroke
+export const VOWEL_PREFIX_MAP: Record<string, string[]> = {
+  'ㅗ': ['ㅘ', 'ㅙ', 'ㅚ'],
+  'ㅜ': ['ㅝ', 'ㅞ', 'ㅟ'],
+  'ㅡ': ['ㅢ'],
+  'ㅏ': ['ㅐ'],
+  'ㅓ': ['ㅔ'],
+  'ㅕ': ['ㅖ'],
+  'ㅑ': ['ㅒ'],
+  'ㅘ': ['ㅙ'],
+  'ㅝ': ['ㅞ'],
+};
+
+// Complex Final Consonants (겹받침 결합 규칙)
 export const COMPLEX_JONGS: Record<string, string> = {
   'ㄱㅅ': 'ㄳ',
   'ㄴㅈ': 'ㄵ',
@@ -43,6 +56,14 @@ export const COMPLEX_JONGS: Record<string, string> = {
   'ㄹㅍ': 'ㄿ',
   'ㄹㅎ': 'ㅀ',
   'ㅂㅅ': 'ㅄ',
+};
+
+// Final Consonant Prefix Map: Single consonants that can become complex final consonants
+export const JONG_PREFIX_MAP: Record<string, string[]> = {
+  'ㄱ': ['ㄳ', 'ㄺ'],
+  'ㄴ': ['ㄵ', 'ㄶ'],
+  'ㄹ': ['ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ'],
+  'ㅂ': ['ㅄ'],
 };
 
 /**
@@ -66,6 +87,24 @@ export function isConsonant(char: string): boolean {
  */
 export function isVowel(char: string): boolean {
   return JUNG_LIST.includes(char);
+}
+
+/**
+ * Checks if current vowel is an incomplete prefix of target compound vowel
+ */
+export function isVowelPrefix(currentJung: string, targetJung: string): boolean {
+  if (currentJung === targetJung) return false;
+  const possibleTargets = VOWEL_PREFIX_MAP[currentJung];
+  return Boolean(possibleTargets && possibleTargets.includes(targetJung));
+}
+
+/**
+ * Checks if current final consonant is an incomplete prefix of target compound final consonant
+ */
+export function isJongPrefix(currentJong: string, targetJong: string): boolean {
+  if (currentJong === targetJong) return false;
+  const possibleTargets = JONG_PREFIX_MAP[currentJong];
+  return Boolean(possibleTargets && possibleTargets.includes(targetJong));
 }
 
 /**
@@ -106,6 +145,8 @@ export function compose(cho: string, jung: string, jong: string = ''): string {
 /**
  * Smart Combiner:
  * Combines existing character in cell with a newly typed character or IME stroke.
+ * Resolves compound vowels (e.g. '호' + 'ㅏ' -> '화') and prevents premature cell advancement.
+ *
  * Returns:
  * {
  *   currentCell: string;   // what goes into the current cell
@@ -118,23 +159,51 @@ export function combineHangulInput(
   newChar: string,
   solutionChar?: string
 ): { currentCell: string; nextCell?: string; shouldAdvance: boolean } {
-  const trimmed = newChar.trim();
+  let trimmed = newChar.trim();
   if (!trimmed) return { currentCell: prevChar, shouldAdvance: false };
 
   const solDec = solutionChar ? decompose(solutionChar) : null;
   const solutionHasJong = Boolean(solDec && solDec.jong);
 
-  // If input contains 2 characters like 'ㅂㅣ' or '미ㄴ' (e.g. fast typing or uncombined buffer)
-  if (trimmed.length === 2) {
-    if (isConsonant(trimmed[0]) && isVowel(trimmed[1])) {
-      const combined = compose(trimmed[0], trimmed[1], '');
-      if (combined) {
-        return combineHangulInput(prevChar, combined, solutionChar);
+  // 1. Multi-character buffer check: Uncombined syllable + vowel (e.g. '호ㅏ' -> '화')
+  if (trimmed.length >= 2 && isCompleteSyllable(trimmed[0]) && isVowel(trimmed[1])) {
+    const dec = decompose(trimmed[0]);
+    if (dec && !dec.jong) {
+      const combinedVowel = COMPLEX_VOWELS[dec.jung + trimmed[1]];
+      if (combinedVowel) {
+        const merged = compose(dec.cho, combinedVowel, '');
+        if (merged) {
+          trimmed = merged + trimmed.slice(2);
+        }
       }
     }
-    if (isCompleteSyllable(trimmed[0]) && isConsonant(trimmed[1])) {
-      const dec = decompose(trimmed[0]);
-      if (dec && !dec.jong && JONG_LIST.includes(trimmed[1])) {
+  }
+
+  // 2. Multi-character buffer check: Syllable + consonant (e.g. '화ㄱ' or '미ㄴ')
+  if (trimmed.length === 2 && isCompleteSyllable(trimmed[0]) && isConsonant(trimmed[1])) {
+    const dec = decompose(trimmed[0]);
+    if (dec && !dec.jong) {
+      // If solution is known and matches trimmed[0], or solution has no 받침:
+      // The second consonant trimmed[1] belongs to the NEXT cell!
+      if (solutionChar && (trimmed[0] === solutionChar || !solutionHasJong)) {
+        return { currentCell: trimmed[0], nextCell: trimmed[1], shouldAdvance: true };
+      }
+
+      // If solution expects this 받침 (e.g. '미' + 'ㄴ' for '민')
+      if (solDec && solDec.jong === trimmed[1]) {
+        const combined = compose(dec.cho, dec.jung, trimmed[1]);
+        if (combined) {
+          return combineHangulInput(prevChar, combined, solutionChar);
+        }
+      }
+
+      // If solution has no 받침, overflow consonant to next cell
+      if (!solutionHasJong) {
+        return { currentCell: trimmed[0], nextCell: trimmed[1], shouldAdvance: true };
+      }
+
+      // Otherwise combine into 받침 if valid
+      if (JONG_LIST.includes(trimmed[1])) {
         const combined = compose(dec.cho, dec.jung, trimmed[1]);
         if (combined) {
           return combineHangulInput(prevChar, combined, solutionChar);
@@ -143,7 +212,15 @@ export function combineHangulInput(
     }
   }
 
-  // Case 1: Incoming is already a complete syllable (e.g. '비', '민', or pasted syllable)
+  // 3. Multi-character buffer check: 2 consonants/vowels (e.g. 'ㅂㅣ' -> '비')
+  if (trimmed.length === 2 && isConsonant(trimmed[0]) && isVowel(trimmed[1])) {
+    const combined = compose(trimmed[0], trimmed[1], '');
+    if (combined) {
+      return combineHangulInput(prevChar, combined, solutionChar);
+    }
+  }
+
+  // Case 1: Incoming is already a complete syllable (e.g. '호', '화', '민', '주')
   if (isCompleteSyllable(trimmed)) {
     const trimDec = decompose(trimmed);
     const trimHasJong = Boolean(trimDec && trimDec.jong);
@@ -153,17 +230,42 @@ export function combineHangulInput(
       return { currentCell: trimmed, shouldAdvance: true };
     }
 
-    // Target solution has NO 받침 (e.g. '비', '대', '주', '표') -> always advance on complete syllable!
-    if (!solutionHasJong) {
+    // Check if trimmed is an intermediate composition step towards solutionChar
+    if (solDec && trimDec) {
+      if (trimDec.cho === solDec.cho) {
+        // Vowel is a prefix of solution's compound vowel (e.g. '호' for '화', '구' for '권') -> DO NOT ADVANCE!
+        if (isVowelPrefix(trimDec.jung, solDec.jung)) {
+          return { currentCell: trimmed, shouldAdvance: false };
+        }
+
+        // Vowel matches, but solution requires a 받침 (jong) that user hasn't typed yet (e.g. '미' for '민', '구' for '국') -> DO NOT ADVANCE!
+        if (trimDec.jung === solDec.jung && solDec.jong && !trimHasJong) {
+          return { currentCell: trimmed, shouldAdvance: false };
+        }
+
+        // Vowel matches, and user typed first half of a compound 받침 (e.g. '갑' for '값') -> DO NOT ADVANCE!
+        if (trimDec.jung === solDec.jung && isJongPrefix(trimDec.jong, solDec.jong)) {
+          return { currentCell: trimmed, shouldAdvance: false };
+        }
+      }
+    }
+
+    // If syllable has a 받침 -> cannot take more vowels or single 받침, so advance!
+    if (trimHasJong) {
       return { currentCell: trimmed, shouldAdvance: true };
     }
 
-    // Target solution DOES have a 받침 (e.g. '민', '법', '헌')
-    if (trimHasJong) {
-      // User entered a syllable WITH a 받침 (e.g. '민' or '문') -> advance!
+    // If syllable has NO 받침:
+    // If its vowel CAN combine into a compound vowel (like 'ㅗ', 'ㅜ', 'ㅡ'),
+    // DO NOT advance prematurely! Wait for the next vowel stroke!
+    if (VOWEL_PREFIX_MAP[trimDec?.jung || '']) {
+      return { currentCell: trimmed, shouldAdvance: false };
+    }
+
+    // If vowel cannot combine further and solution has no 받침, advance
+    if (!solutionHasJong) {
       return { currentCell: trimmed, shouldAdvance: true };
     } else {
-      // User entered 초성+중성 (e.g. '미' or '버'), wait for user to type 받침 ('ㄴ' or 'ㅂ')!
       return { currentCell: trimmed, shouldAdvance: false };
     }
   }
@@ -228,7 +330,7 @@ export function combineHangulInput(
       }
     }
 
-    // If previous cell has a syllable without 받침 and incoming forms a complex vowel (e.g. 'ㅗ' + 'ㅏ' = 'ㅘ')
+    // If previous cell has a syllable without 받침 and incoming forms a complex vowel (e.g. '호' + 'ㅏ' = '화')
     if (isCompleteSyllable(prevChar)) {
       const dec = decompose(prevChar);
       if (dec && !dec.jong) {
