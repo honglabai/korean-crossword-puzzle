@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "sudoku:dev": "npm --prefix my-love-sudoku run dev",
     "sudoku:build": "npm --prefix my-love-sudoku run build",
-    "sudoku:test": "npm --prefix my-love-sudoku test"
+    "sudoku:test": "npm --prefix my-love-sudoku test",
+    "honglabai:dev": "npm --prefix honglabai run dev",
+    "honglabai:build": "npm --prefix honglabai run build",
+    "honglabai:test": "npm --prefix honglabai run test"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
