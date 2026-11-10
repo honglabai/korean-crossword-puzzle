@@ -937,23 +937,16 @@ export function App() {
       <div className="absolute inset-0 bg-white/45 backdrop-blur-[1px] pointer-events-none -z-0" />
 
       <div className="relative z-10">
-        {/* 1. Top Header with Date Badge & Theme Switcher */}
+        {/* 1. Top Header with Date Badge & Timer & App Install */}
         <WorkbookHeader
           currentLevel={currentLevel}
           clearCountInLevel={clearCountInLevel}
-          currentTheme={currentTheme}
           selectedCategory={selectedCategory}
           elapsedSeconds={elapsedSeconds}
           isTimerRunning={isTimerRunning}
-          onSelectTheme={(themeId) => setUserThemeId(themeId)}
           onOpenTest={() => setIsPlacementTestOpen(true)}
           onOpenCategoryModal={() => setIsCategoryModalOpen(true)}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
-          isMuted={isMuted}
-          onToggleSound={() => {
-            sounds.isMuted = !isMuted;
-            setIsMuted(!isMuted);
-          }}
         />
 
         {/* Locked Gate Alert Banner */}
@@ -1004,7 +997,7 @@ export function App() {
                 loadBoard(lvl, 1, selectedCategory);
               }}
               onLockedClick={(lvl) => {
-                setLockAlertToast(`🔒 Lv.${lvl}은 아직 잠겨 있습니다. 이전 레벨(Lv.${lvl - 1})의 3판 관문을 모두 클리어하거나 실력 진단 테스트로 해금하세요!`);
+                setLockAlertToast(`🔒 Lv.${lvl}은 아직 잠겨 있습니다. 이전 레벨(Lv.${lvl - 1})의 3판 관문을 모두 클리어하거나 레벨 진단으로 해금하세요!`);
                 setTimeout(() => setLockAlertToast(null), 3500);
               }}
             />
@@ -1012,7 +1005,7 @@ export function App() {
             {/* Friendly Non-intrusive Placement Test Invitation (does NOT pop up automatically) */}
             {!isTested && (
               <aside
-                aria-label="어휘 진단 테스트 안내"
+                aria-label="어휘 레벨 진단 안내"
                 className="max-w-6xl mx-auto px-3 sm:px-4 my-2.5"
               >
                 <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 border border-sky-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-700">
@@ -1023,7 +1016,7 @@ export function App() {
                         나의 어휘력에 딱 맞는 레벨이 궁금하신가요?
                       </p>
                       <p className="text-[11px] sm:text-xs text-slate-500 font-normal mt-0.5">
-                        5문항의 1분 진단 테스트로 실력을 검증하고 추천 레벨을 즉시 해금할 수 있습니다.
+                        5문항의 1분 레벨 진단으로 실력을 검증하고 추천 레벨을 즉시 해금할 수 있습니다.
                       </p>
                     </div>
                   </div>
@@ -1035,7 +1028,7 @@ export function App() {
                     }}
                     className="w-full sm:w-auto px-4 py-2 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-xl shadow-xs transition shrink-0 cursor-pointer text-center"
                   >
-                    진단 테스트 시작
+                    레벨 진단 시작
                   </button>
                 </div>
               </aside>
