@@ -106,45 +106,44 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
     }
   };
 
-  // Responsive font size scaling with Large Font Mode support
+  // Responsive font size scaling with Large Font Mode support - Maximized for readability
   const getLetterFontSize = () => {
     if (isLargeFont) {
-      if (size <= 9) return 'text-xl sm:text-2xl font-black';
-      if (size <= 11) return 'text-base sm:text-lg font-black';
-      return 'text-sm sm:text-base font-black';
+      if (size <= 9) return 'text-2xl sm:text-4xl font-black';
+      if (size <= 11) return 'text-xl sm:text-3xl font-black';
+      return 'text-lg sm:text-2xl font-black';
     }
-    if (size <= 9) return 'text-base sm:text-xl font-black';
-    if (size <= 11) return 'text-sm sm:text-base font-bold';
-    return 'text-xs sm:text-sm font-bold';
+    if (size <= 9) return 'text-xl sm:text-3xl font-black';
+    if (size <= 11) return 'text-lg sm:text-2xl font-black';
+    return 'text-base sm:text-xl font-black';
   };
 
   const getNumberFontSize = () => {
-    if (size <= 9) return 'text-[9px] sm:text-[11px]';
-    if (size <= 11) return 'text-[8px] sm:text-[9px]';
-    return 'text-[7px] sm:text-[8px]';
+    if (size <= 9) return 'text-[8px] sm:text-[10px] font-black';
+    if (size <= 11) return 'text-[7px] sm:text-[9px] font-black';
+    return 'text-[6px] sm:text-[8px] font-black';
   };
 
   const getInputPixelFontSize = () => {
     if (isLargeFont) {
-      return size <= 9 ? '24px' : size <= 11 ? '19px' : '16px';
+      return size <= 9 ? '32px' : size <= 11 ? '26px' : '22px';
     }
-    return size <= 9 ? '20px' : size <= 11 ? '16px' : '14px';
+    return size <= 9 ? '28px' : size <= 11 ? '22px' : '18px';
   };
 
   return (
-    <div className="relative flex flex-col items-center select-none w-full max-w-[min(94vw,480px)] mx-auto px-1 touch-manipulation my-2">
+    <div className="relative flex flex-col items-center select-none w-full max-w-[min(98vw,560px)] mx-auto px-0.5 touch-manipulation my-1">
       {/* 
         Main Board Box:
-        - Outer border frame
-        - Clean, sleek, no decorative characters around
-        - 50% translucent backdrop so the generated level background shows through empty cells!
+        - Minimized outer borders & paddings so cells get maximum screen area
+        - Translucent backdrop so level background art shows through empty cells
       */}
       <div
-        className={`relative w-full aspect-square p-2 sm:p-2.5 rounded-[24px] sm:rounded-[30px] border-[5px] sm:border-[6px] shadow-2xl backdrop-blur-xs transition-colors duration-200 ${theme.boardBorder} bg-slate-900/40`}
+        className={`relative w-full aspect-square p-1 sm:p-1.5 rounded-2xl sm:rounded-3xl border-2 sm:border-[3px] shadow-xl backdrop-blur-xs transition-colors duration-200 ${theme.boardBorder} bg-slate-900/40`}
       >
         {/* Dynamic NxN Grid Cells */}
         <div
-          className={`grid gap-[1.5px] sm:gap-[2px] w-full h-full p-[2px] rounded-[16px] sm:rounded-[22px] overflow-hidden bg-slate-600/30`}
+          className="grid gap-[1px] sm:gap-[1.5px] w-full h-full p-[1px] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-600/30"
           style={{
             gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,
@@ -219,7 +218,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                   {/* Top-Left Circled Number Badge */}
                   {cell.startNumberText && (
                     <span
-                      className={`absolute top-[1.5px] left-[2px] leading-none font-black pointer-events-none z-10 ${
+                      className={`absolute top-[1px] left-[1.5px] leading-none font-black pointer-events-none z-10 ${
                         isCharCorrect
                           ? 'text-emerald-700/80'
                           : isCharIncorrect
@@ -234,22 +233,22 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                   {/* Top-Right Real-Time Validation Indicator Badge */}
                   {isCharCorrect && (
                     <span
-                      className={`absolute top-[1.5px] right-[2px] rounded-full bg-emerald-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
-                        size <= 9 ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' : 'w-2.5 h-2.5 sm:w-3 sm:h-3'
+                      className={`absolute top-[1px] right-[1.5px] rounded-full bg-emerald-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
+                        size <= 9 ? 'w-2.5 h-2.5 sm:w-3 sm:h-3' : 'w-2 h-2 sm:w-2.5 sm:h-2.5'
                       }`}
                       title="정답"
                     >
-                      <Check className="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[3.5]" />
+                      <Check className="w-1.5 h-1.5 sm:w-2 sm:h-2 stroke-[3.5]" />
                     </span>
                   )}
                   {isCharIncorrect && (
                     <span
-                      className={`absolute top-[1.5px] right-[2px] rounded-full bg-rose-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
-                        size <= 9 ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' : 'w-2.5 h-2.5 sm:w-3 sm:h-3'
+                      className={`absolute top-[1px] right-[1.5px] rounded-full bg-rose-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
+                        size <= 9 ? 'w-2.5 h-2.5 sm:w-3 sm:h-3' : 'w-2 h-2 sm:w-2.5 sm:h-2.5'
                       }`}
                       title="오답"
                     >
-                      <X className="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[3.5]" />
+                      <X className="w-1.5 h-1.5 sm:w-2 sm:h-2 stroke-[3.5]" />
                     </span>
                   )}
 

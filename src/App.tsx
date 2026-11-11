@@ -1036,11 +1036,11 @@ export function App() {
             {!isTested && (
               <aside
                 aria-label="어휘 레벨 진단 안내"
-                className="max-w-6xl mx-auto px-3 sm:px-4 my-2.5"
+                className="max-w-6xl mx-auto px-2 sm:px-3 my-1"
               >
-                <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 border border-sky-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-700">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl p-2 bg-white rounded-xl shadow-2xs border border-sky-100">🎯</span>
+                <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 border border-sky-200/90 rounded-xl p-2.5 sm:p-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-2.5 text-slate-700">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl p-1.5 bg-white rounded-lg shadow-2xs border border-sky-100">🎯</span>
                     <div>
                       <p className="text-xs sm:text-sm font-black text-slate-800">
                         나의 어휘력에 딱 맞는 레벨이 궁금하신가요?
@@ -1056,7 +1056,7 @@ export function App() {
                       sounds.playKey();
                       setIsPlacementTestOpen(true);
                     }}
-                    className="w-full sm:w-auto px-4 py-2 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-xl shadow-xs transition shrink-0 cursor-pointer text-center"
+                    className="w-full sm:w-auto px-3.5 py-1.5 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-xl shadow-xs transition shrink-0 cursor-pointer text-center"
                   >
                     레벨 진단 시작
                   </button>
@@ -1065,8 +1065,8 @@ export function App() {
             )}
 
             {/* 3. Main Play Area */}
-            <main className="max-w-6xl mx-auto px-3 sm:px-4 mt-1 pb-24">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            <main className="max-w-6xl mx-auto px-1 sm:px-3 mt-0.5 pb-20">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
                 {/* Left / Center: Crossword Board with Illustrations */}
                 <div className="lg:col-span-7 flex flex-col items-center">
                   <CrosswordBoard
@@ -1107,7 +1107,7 @@ export function App() {
                   />
 
                   {/* In-game helper controls */}
-                  <div className="w-full max-w-[480px]">
+                  <div className="w-full max-w-[min(98vw,560px)] lg:max-w-[580px]">
                     <GameControls
                       hintBalance={hintBalance}
                       onRequestHint={handleRequestHint}

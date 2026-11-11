@@ -66,10 +66,10 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
 
   return (
     <div
-      className={`w-full max-w-[480px] my-2 p-3 sm:p-4 rounded-2xl bg-white/95 backdrop-blur-md border-2 shadow-md transition-all duration-150 animate-in fade-in slide-in-from-top-1 ${theme.boardBorder}`}
+      className={`w-full max-w-[min(98vw,560px)] lg:max-w-[580px] my-1 p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm transition-all duration-150 animate-in fade-in slide-in-from-top-1`}
     >
       {/* Top Header of Clue Card */}
-      <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 flex-wrap">
+      <div className="flex items-center justify-between gap-1.5 mb-1 pb-1 border-b border-slate-100 flex-wrap">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Circled Number */}
           <span className={`font-black ${theme.numberColor} ${isLargeFont ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'}`}>
@@ -85,7 +85,7 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
               }
             }}
             disabled={!isIntersection}
-            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold text-white transition active:scale-95 ${
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-white transition active:scale-95 ${
               isIntersection
                 ? 'bg-gradient-to-r from-[#0288d1] to-[#7b1fa2] hover:opacity-95 shadow-2xs cursor-pointer ring-1 ring-white/60'
                 : activeDirection === 'across'
@@ -115,35 +115,35 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
 
           {/* Progress / Word Length Badge */}
           {isCompleted ? (
-            <span className="text-[11px] font-black text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-300 shadow-2xs">
+            <span className="text-[11px] font-black text-emerald-700 bg-emerald-100/90 px-1.5 py-0.5 rounded-md border border-emerald-300 shadow-2xs">
               ✓ 완성됨
             </span>
           ) : correctCount > 0 ? (
-            <span className="text-[11px] font-bold text-sky-800 bg-sky-100/80 px-2 py-0.5 rounded-md border border-sky-300 shadow-2xs">
+            <span className="text-[11px] font-bold text-sky-800 bg-sky-100/80 px-1.5 py-0.5 rounded-md border border-sky-300 shadow-2xs">
               {correctCount} / {activeWord.length}글자 정답
             </span>
           ) : (
-            <span className={`font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 ${isLargeFont ? 'text-xs' : 'text-[11px]'}`}>
+            <span className={`font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200 ${isLargeFont ? 'text-xs' : 'text-[11px]'}`}>
               {activeWord.length}글자
             </span>
           )}
         </div>
 
         {/* Action Controls: Hint & Direction Toggle & Prev/Next */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {/* Hint Button right in Clue Card */}
           <button
             onClick={() => {
               sounds.playHint();
               onRequestHint();
             }}
-            className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs cursor-pointer"
             title="초성 힌트 보기"
           >
             <Lightbulb className="w-3.5 h-3.5 text-amber-500 fill-amber-300" />
             <span>힌트</span>
             <span
-              className={`px-1.5 py-0.2 rounded-md text-[10px] font-black ${
+              className={`px-1 py-0.2 rounded-md text-[10px] font-black ${
                 hintBalance > 0 ? 'bg-amber-200 text-amber-900' : 'bg-rose-100 text-rose-700'
               }`}
             >
@@ -178,7 +178,7 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
       </div>
 
       {/* Main Definition Text */}
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1.5 py-0.5">
         <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
         <p
           className={`font-bold text-slate-800 leading-snug break-keep ${
@@ -189,14 +189,14 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
         </p>
       </div>
 
-      {/* Expanded Educational / Constitutional Insight Toggle (Resolves User Pain Point #4) */}
-      <div className="mt-2 pt-2 border-t border-slate-100">
+      {/* Expanded Educational / Constitutional Insight Toggle */}
+      <div className="mt-1 pt-1 border-t border-slate-100">
         <button
           onClick={() => {
             sounds.playKey();
             setShowDetailedContext(!showDetailedContext);
           }}
-          className="w-full flex items-center justify-between text-[11px] font-bold text-indigo-700 bg-indigo-50/70 hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 transition"
+          className="w-full flex items-center justify-between text-[11px] font-bold text-indigo-700 bg-indigo-50/70 hover:bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 transition"
         >
           <span className="flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
@@ -210,7 +210,7 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
         </button>
 
         {showDetailedContext && (
-          <div className="mt-1.5 p-2.5 bg-indigo-50/50 rounded-xl border border-indigo-100 text-slate-700 text-xs leading-relaxed animate-in fade-in duration-150">
+          <div className="mt-1 p-2 bg-indigo-50/50 rounded-xl border border-indigo-100 text-slate-700 text-xs leading-relaxed animate-in fade-in duration-150">
             <p className="font-medium text-slate-800 break-keep">
               {contextText}
             </p>

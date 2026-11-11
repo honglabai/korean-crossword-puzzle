@@ -49,14 +49,14 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({
       : { label: '고급', words: 20, badgeClass: 'bg-purple-100 text-purple-800 border-purple-300' };
 
   return (
-    <header className="relative w-full max-w-5xl mx-auto pt-3 pb-2 px-3 sm:px-4 select-none touch-manipulation">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
+    <header className="relative w-full max-w-5xl mx-auto pt-2 pb-1 px-1.5 sm:px-3 select-none touch-manipulation">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-2.5">
         {/* Left: Logo & Category Title */}
-        <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
+          <div className="flex items-center gap-2">
             <button
               onClick={onOpenCategoryModal}
-              className="relative flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 bg-white/95 rounded-2xl shadow-sm border border-slate-200 shrink-0 hover:scale-105 active:scale-95 transition cursor-pointer"
+              className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-white/95 rounded-xl shadow-sm border border-slate-200 shrink-0 hover:scale-105 active:scale-95 transition cursor-pointer"
               title="분야 변경"
             >
               <span className="text-xl sm:text-2xl">{catMeta.icon}</span>
@@ -140,7 +140,7 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({
       </div>
 
       {/* Progress in current level */}
-      <div className="mt-2 flex items-center justify-between text-xs text-slate-600 bg-white/70 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-slate-200/60 shadow-2xs flex-wrap gap-1">
+      <div className="mt-1 flex items-center justify-between text-xs text-slate-600 bg-white/70 backdrop-blur-xs px-2.5 py-1 rounded-xl border border-slate-200/60 shadow-2xs flex-wrap gap-1">
         <div className="flex items-center gap-1.5 font-bold">
           <BookOpen className="w-4 h-4 text-[#0288d1]" />
           <span>Level {currentLevel}</span>

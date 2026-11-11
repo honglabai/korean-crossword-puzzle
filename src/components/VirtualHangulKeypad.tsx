@@ -72,10 +72,10 @@ export const VirtualHangulKeypad: React.FC<VirtualHangulKeypadProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[480px] mt-2 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 overflow-hidden shadow-md transition-all touch-manipulation">
+    <div className="w-full max-w-[min(98vw,560px)] lg:max-w-[580px] mt-1 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm transition-all touch-manipulation">
       {/* Mobile Input & Navigation Quick Bar */}
-      <div className="px-3 py-2 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1">
+      <div className="px-2 py-1 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between gap-1.5">
+        <div className="flex items-center gap-1.5 flex-1">
           <span className="text-xs font-bold text-slate-500 shrink-0">
             직접 입력:
           </span>
@@ -86,19 +86,19 @@ export const VirtualHangulKeypad: React.FC<VirtualHangulKeypadProps> = ({
             onCompositionEnd={handleManualCompositionEnd}
             placeholder={currentCellChar ? `현재: ${currentCellChar}` : '한글 타이핑'}
             style={{ fontSize: '16px' }}
-            className="w-full max-w-[150px] px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-800 focus:outline-hidden focus:border-[#0288d1] shadow-2xs"
+            className="w-full max-w-[150px] px-2 py-1 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-800 focus:outline-hidden focus:border-[#0288d1] shadow-2xs"
           />
         </div>
 
         {/* Backspace & Cell Movement Buttons */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {onPrevCell && (
             <button
               onClick={() => {
                 sounds.playKey();
                 onPrevCell();
               }}
-              className="p-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs cursor-pointer"
+              className="p-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs cursor-pointer"
               title="이전 칸 (◀)"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -111,7 +111,7 @@ export const VirtualHangulKeypad: React.FC<VirtualHangulKeypadProps> = ({
                 sounds.playKey();
                 onNextCell();
               }}
-              className="p-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs cursor-pointer"
+              className="p-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition active:scale-95 shadow-2xs cursor-pointer"
               title="다음 칸 (▶)"
             >
               <ArrowRight className="w-3.5 h-3.5" />
@@ -123,7 +123,7 @@ export const VirtualHangulKeypad: React.FC<VirtualHangulKeypadProps> = ({
               sounds.playKey();
               onBackspace();
             }}
-            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-300 rounded-lg text-xs font-black flex items-center gap-1 shadow-2xs transition active:scale-95 cursor-pointer"
+            className="px-2 py-1 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-300 rounded-lg text-xs font-black flex items-center gap-1 shadow-2xs transition active:scale-95 cursor-pointer"
             title="글자 지우기"
           >
             <Delete className="w-3.5 h-3.5" />
@@ -138,7 +138,7 @@ export const VirtualHangulKeypad: React.FC<VirtualHangulKeypadProps> = ({
           sounds.playKey();
           setIsOpen(!isOpen);
         }}
-        className="w-full px-3 py-1.5 flex items-center justify-between text-[11px] font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+        className="w-full px-2.5 py-1 flex items-center justify-between text-[11px] font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
       >
         <span className="flex items-center gap-1.5">
           <Keyboard className="w-3.5 h-3.5 text-slate-500" />
@@ -149,7 +149,7 @@ export const VirtualHangulKeypad: React.FC<VirtualHangulKeypadProps> = ({
 
       {/* Touch Keypad */}
       {isOpen && (
-        <div className="p-2 pt-1 border-t border-slate-200 bg-[#fafcff]">
+        <div className="p-1.5 pt-0.5 border-t border-slate-200 bg-[#fafcff]">
           <div className="space-y-1">
             {displayRows.map((row, rowIdx) => (
               <div key={rowIdx} className="flex justify-center gap-1">
@@ -160,7 +160,7 @@ export const VirtualHangulKeypad: React.FC<VirtualHangulKeypadProps> = ({
                       sounds.playKey();
                       onInputChar(char);
                     }}
-                    className="flex-1 max-w-[54px] h-10 bg-white hover:bg-sky-50 active:bg-sky-100 active:scale-95 border border-slate-300 rounded-lg font-black text-sm sm:text-base text-slate-800 shadow-2xs transition flex items-center justify-center min-h-[40px] cursor-pointer"
+                    className="flex-1 max-w-[54px] h-9 sm:h-10 bg-white hover:bg-sky-50 active:bg-sky-100 active:scale-95 border border-slate-300 rounded-lg font-black text-sm sm:text-base text-slate-800 shadow-2xs transition flex items-center justify-center cursor-pointer"
                   >
                     {char}
                   </button>
