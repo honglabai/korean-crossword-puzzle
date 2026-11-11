@@ -1034,23 +1034,18 @@ export function App() {
               }}
             />
 
-            {/* Friendly Non-intrusive Placement Test Invitation (does NOT pop up automatically) */}
+            {/* Friendly Non-intrusive Placement Test Invitation */}
             {!isTested && (
               <aside
                 aria-label="어휘 레벨 진단 안내"
-                className="max-w-6xl mx-auto px-2 sm:px-3 my-1"
+                className="max-w-5xl mx-auto px-2 sm:px-3 my-0.5"
               >
-                <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 border border-sky-200/90 rounded-xl p-2.5 sm:p-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-2.5 text-slate-700">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xl p-1.5 bg-white rounded-lg shadow-2xs border border-sky-100">🎯</span>
-                    <div>
-                      <p className="text-xs sm:text-sm font-black text-slate-800">
-                        나의 어휘력에 딱 맞는 레벨이 궁금하신가요?
-                      </p>
-                      <p className="text-[11px] sm:text-xs text-slate-500 font-normal mt-0.5">
-                        5문항의 1분 레벨 진단으로 실력을 검증하고 추천 레벨을 즉시 해금할 수 있습니다.
-                      </p>
-                    </div>
+                <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 border border-sky-200/80 rounded-xl px-3 py-1.5 shadow-2xs flex items-center justify-between gap-2 text-slate-700">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base shrink-0">🎯</span>
+                    <p className="text-xs font-bold text-slate-800 truncate">
+                      내 실력에 딱 맞는 레벨이 궁금하다면? <span className="text-slate-500 font-normal hidden sm:inline">5문항 1분 레벨 진단</span>
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -1058,58 +1053,56 @@ export function App() {
                       sounds.playKey();
                       setIsPlacementTestOpen(true);
                     }}
-                    className="w-full sm:w-auto px-3.5 py-1.5 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-xl shadow-xs transition shrink-0 cursor-pointer text-center"
+                    className="px-2.5 py-1 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-lg shadow-2xs transition shrink-0 cursor-pointer text-center"
                   >
-                    레벨 진단 시작
+                    레벨 진단
                   </button>
                 </div>
               </aside>
             )}
 
             {/* 3. Main Play Area */}
-            <main className="max-w-6xl mx-auto px-1 sm:px-3 mt-0.5 pb-20">
+            <main className="w-full max-w-6xl mx-auto px-0 sm:px-3 mt-0.5 pb-20">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
-                {/* Left / Center: Crossword Board with Illustrations */}
-                <div className="lg:col-span-7 flex flex-col items-center">
-                  <CrosswordBoard
-                    board={board}
-                    theme={currentTheme}
-                    userGrid={userGrid}
-                    activeWord={activeWord}
-                    activeDirection={activeDirection}
-                    selectedCell={selectedCell}
-                    wrongCells={wrongCells}
-                    revealedChosungs={revealedChosungs}
-                    isLargeFont={isLargeFont}
-                    onCellClick={handleCellClick}
-                    onCellInput={handleCellInput}
-                    onCellBackspace={handleCellBackspace}
-                    onNavigate={handleNavigate}
-                    currentPageNumber={currentLevel}
-                  />
+                {/* Left / Center: Unified Interactive Play Area ("Merged Box") */}
+                <div className="lg:col-span-7 flex flex-col items-center w-full px-0 sm:px-1">
+                  <div className="w-full max-w-[min(100vw,580px)] mx-auto bg-white/95 backdrop-blur-md rounded-none sm:rounded-3xl border-y sm:border border-slate-200/90 shadow-md sm:shadow-lg overflow-hidden flex flex-col">
+                    {/* 1. Crossword Board */}
+                    <CrosswordBoard
+                      board={board}
+                      theme={currentTheme}
+                      userGrid={userGrid}
+                      activeWord={activeWord}
+                      activeDirection={activeDirection}
+                      selectedCell={selectedCell}
+                      wrongCells={wrongCells}
+                      revealedChosungs={revealedChosungs}
+                      isLargeFont={isLargeFont}
+                      onCellClick={handleCellClick}
+                      onCellInput={handleCellInput}
+                      onCellBackspace={handleCellBackspace}
+                      onNavigate={handleNavigate}
+                      currentPageNumber={currentLevel}
+                    />
 
-                  {/* 
-                    PROMINENT CLUE / HELP CARD:
-                    Directly below the board! Clicking any letter immediately updates this clue!
-                  */}
-                  <ActiveClueCard
-                    activeWord={activeWord}
-                    activeDirection={activeDirection}
-                    theme={currentTheme}
-                    isIntersection={isIntersection}
-                    hintBalance={hintBalance}
-                    isLargeFont={isLargeFont}
-                    selectedCategory={selectedCategory}
-                    onRequestHint={handleRequestHint}
-                    onToggleDirection={handleToggleDirection}
-                    onPrevWord={handlePrevWord}
-                    onNextWord={handleNextWord}
-                    isCompleted={activeWord ? completedWordIds.has(activeWord.id) : false}
-                    userGrid={userGrid}
-                  />
+                    {/* 2. Prominent Clue / Help Card */}
+                    <ActiveClueCard
+                      activeWord={activeWord}
+                      activeDirection={activeDirection}
+                      theme={currentTheme}
+                      isIntersection={isIntersection}
+                      hintBalance={hintBalance}
+                      isLargeFont={isLargeFont}
+                      selectedCategory={selectedCategory}
+                      onRequestHint={handleRequestHint}
+                      onToggleDirection={handleToggleDirection}
+                      onPrevWord={handlePrevWord}
+                      onNextWord={handleNextWord}
+                      isCompleted={activeWord ? completedWordIds.has(activeWord.id) : false}
+                      userGrid={userGrid}
+                    />
 
-                  {/* In-game helper controls */}
-                  <div className="w-full max-w-[min(98vw,560px)] lg:max-w-[580px]">
+                    {/* 3. In-Game Controls */}
                     <GameControls
                       hintBalance={hintBalance}
                       onRequestHint={handleRequestHint}
@@ -1118,6 +1111,8 @@ export function App() {
                       onResetBoard={handleResetBoard}
                       onGenerateNewBoard={handleGenerateNewBoard}
                     />
+
+                    {/* 4. Virtual Hangul Keypad */}
                     <VirtualHangulKeypad
                       currentCellChar={selectedCellChar}
                       puzzleLetters={puzzleLetters}
@@ -1138,7 +1133,7 @@ export function App() {
                 </div>
 
                 {/* Right: Across & Down Clues Lists */}
-                <div className="lg:col-span-5 w-full">
+                <div className="lg:col-span-5 w-full px-2 sm:px-0">
                   <CluesList
                     placedWords={board.placedWords}
                     activeWord={activeWord}

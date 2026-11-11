@@ -109,41 +109,41 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
   // Responsive font size scaling with Large Font Mode support - Maximized for readability
   const getLetterFontSize = () => {
     if (isLargeFont) {
-      if (size <= 9) return 'text-2xl sm:text-4xl font-black';
-      if (size <= 11) return 'text-xl sm:text-3xl font-black';
+      if (size <= 8) return 'text-2xl sm:text-4xl font-black';
+      if (size <= 10) return 'text-xl sm:text-3xl font-black';
       return 'text-lg sm:text-2xl font-black';
     }
-    if (size <= 9) return 'text-xl sm:text-3xl font-black';
-    if (size <= 11) return 'text-lg sm:text-2xl font-black';
+    if (size <= 8) return 'text-xl sm:text-3xl font-black';
+    if (size <= 10) return 'text-lg sm:text-2xl font-black';
     return 'text-base sm:text-xl font-black';
   };
 
   const getNumberFontSize = () => {
-    if (size <= 9) return 'text-[8px] sm:text-[10px] font-black';
-    if (size <= 11) return 'text-[7px] sm:text-[9px] font-black';
-    return 'text-[6px] sm:text-[8px] font-black';
+    if (size <= 8) return 'text-[9px] sm:text-[11px] font-black';
+    if (size <= 10) return 'text-[8px] sm:text-[10px] font-black';
+    return 'text-[7px] sm:text-[9px] font-black';
   };
 
   const getInputPixelFontSize = () => {
     if (isLargeFont) {
-      return size <= 9 ? '32px' : size <= 11 ? '26px' : '22px';
+      return size <= 8 ? '34px' : size <= 10 ? '28px' : '24px';
     }
-    return size <= 9 ? '28px' : size <= 11 ? '22px' : '18px';
+    return size <= 8 ? '30px' : size <= 10 ? '24px' : '20px';
   };
 
   return (
-    <div className="relative flex flex-col items-center select-none w-full max-w-[min(98vw,560px)] mx-auto px-0.5 touch-manipulation my-1">
+    <div className="relative flex flex-col items-center select-none w-full touch-manipulation">
       {/* 
         Main Board Box:
-        - Minimized outer borders & paddings so cells get maximum screen area
-        - Translucent backdrop so level background art shows through empty cells
+        - Outer bulky boxes/margins removed so grid cells reach the left & right edges
+        - Integrated seamlessly as the top section of the play container
       */}
       <div
-        className={`relative w-full aspect-square p-1 sm:p-1.5 rounded-2xl sm:rounded-3xl border-2 sm:border-[3px] shadow-xl backdrop-blur-xs transition-colors duration-200 ${theme.boardBorder} bg-slate-900/40`}
+        className="relative w-full aspect-square p-1 sm:p-2 bg-slate-950/70 transition-colors duration-200"
       >
         {/* Dynamic NxN Grid Cells */}
         <div
-          className="grid gap-[1px] sm:gap-[1.5px] w-full h-full p-[1px] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-600/30"
+          className="grid gap-[1px] sm:gap-[1.5px] w-full h-full p-0.5 rounded-lg sm:rounded-xl overflow-hidden bg-slate-700/40"
           style={{
             gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,
@@ -163,7 +163,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                 return (
                   <div
                     key={cellKey}
-                    className="w-full h-full bg-slate-900/60 backdrop-blur-[2px] transition-colors rounded-[5px] sm:rounded-[7px] border border-white/5"
+                    className="w-full h-full bg-slate-900/50 backdrop-blur-[2px] transition-colors rounded-[4px] sm:rounded-[6px] border border-white/5"
                   />
                 );
               }
@@ -213,7 +213,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                     sounds.playKey();
                     onCellClick(r, c);
                   }}
-                  className={`relative flex items-center justify-center cursor-pointer transition-all duration-150 font-bold rounded-[5px] sm:rounded-[7px] select-none ${cellStyle}`}
+                  className={`relative flex items-center justify-center cursor-pointer transition-all duration-150 font-bold rounded-[4px] sm:rounded-[6px] select-none ${cellStyle}`}
                 >
                   {/* Top-Left Circled Number Badge */}
                   {cell.startNumberText && (
@@ -233,22 +233,22 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                   {/* Top-Right Real-Time Validation Indicator Badge */}
                   {isCharCorrect && (
                     <span
-                      className={`absolute top-[1px] right-[1.5px] rounded-full bg-emerald-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
-                        size <= 9 ? 'w-2.5 h-2.5 sm:w-3 sm:h-3' : 'w-2 h-2 sm:w-2.5 sm:h-2.5'
+                      className={`absolute top-[1.5px] right-[1.5px] rounded-full bg-emerald-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
+                        size <= 8 ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' : 'w-2.5 h-2.5 sm:w-3 sm:h-3'
                       }`}
                       title="정답"
                     >
-                      <Check className="w-1.5 h-1.5 sm:w-2 sm:h-2 stroke-[3.5]" />
+                      <Check className="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[3.5]" />
                     </span>
                   )}
                   {isCharIncorrect && (
                     <span
-                      className={`absolute top-[1px] right-[1.5px] rounded-full bg-rose-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
-                        size <= 9 ? 'w-2.5 h-2.5 sm:w-3 sm:h-3' : 'w-2 h-2 sm:w-2.5 sm:h-2.5'
+                      className={`absolute top-[1.5px] right-[1.5px] rounded-full bg-rose-500 text-white flex items-center justify-center pointer-events-none shadow-2xs z-10 animate-in zoom-in-75 duration-150 ${
+                        size <= 8 ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' : 'w-2.5 h-2.5 sm:w-3 sm:h-3'
                       }`}
                       title="오답"
                     >
-                      <X className="w-1.5 h-1.5 sm:w-2 sm:h-2 stroke-[3.5]" />
+                      <X className="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[3.5]" />
                     </span>
                   )}
 

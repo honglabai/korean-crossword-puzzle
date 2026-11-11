@@ -25,14 +25,14 @@ export function getWordCountForLevel(level: number): number {
 
 /**
  * Returns grid size for a given level:
- * - 초급: 9x9
- * - 중급: 11x11
- * - 전문가: 13x13
+ * - 초급 (Lv.1 ~ 3): 8x8 (가로·세로 1칸 축소로 글자 및 터치 가독성 극대화)
+ * - 중급 (Lv.4 ~ 7): 10x10
+ * - 전문가 (Lv.8 ~ 10): 12x12
  */
 export function getGridSizeForLevel(level: number): number {
-  if (level <= 3) return 9;
-  if (level <= 7) return 11;
-  return 13;
+  if (level <= 3) return 8;
+  if (level <= 7) return 10;
+  return 12;
 }
 
 /**
