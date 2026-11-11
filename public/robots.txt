@@ -1,12 +1,30 @@
+# Robots.txt for korean-crossword-puzzle.vercel.app
+# Optimized for Google SEO and Naver Search Advisor (네이버 서치어드바이저)
+
 User-agent: *
 Allow: /
 
-# Google AdSense Crawler
-User-agent: Mediapartners-Google
+# Naver Search Engine Bot (네이버 검색로봇)
+User-agent: Yeti
 Allow: /
 
-# Google Search Engine Crawler
+# Google Search Engine & AdSense Bots
 User-agent: Googlebot
 Allow: /
 
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Mediapartners-Google
+Allow: /
+
+# Daum / Kakao Search Engine Bot
+User-agent: Daumoa
+Allow: /
+
+# Microsoft Bing Search Bot
+User-agent: bingbot
+Allow: /
+
+# Sitemaps
 Sitemap: https://korean-crossword-puzzle.vercel.app/sitemap.xml

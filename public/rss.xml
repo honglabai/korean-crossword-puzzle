@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>지식 탐구 가로세로 낱말퍼즐 - 8대 영역 십자말풀이 &amp; 지식 백과사전</title>
+    <link>https://korean-crossword-puzzle.vercel.app/</link>
+    <description>대한민국 8대 지식 영역(정치, 사회, 문화, 스포츠, 한국사, 세계사, 음악, 미술) 2,480개 어휘와 240개 십자말풀이, 심층 교양 지식 백과 칼럼을 무료로 제공하는 상식 교육 웹 플랫폼입니다.</description>
+    <language>ko-KR</language>
+    <copyright>© 2026 honglabai. All rights reserved.</copyright>
+    <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 11 Nov 2026 00:00:00 +0900</lastBuildDate>
+    <atom:link href="https://korean-crossword-puzzle.vercel.app/rss.xml" rel="self" type="application/rss+xml" />
+
+    <item>
+      <title>[정치] 민주공화국의 헌법적 가치와 권력분립 원리</title>
+      <link>https://korean-crossword-puzzle.vercel.app/#knowledge/politics</link>
+      <guid>https://korean-crossword-puzzle.vercel.app/#knowledge/politics</guid>
+      <description>대한민국 헌법 제1조의 민주공화국 원리, 국민주권주의, 입법·사법·행정의 삼권분립 상호 견제와 균형, 비례대표제 및 정당 민주주의 등 정치학 필수 핵심 상식을 정리합니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    </item>
+
+    <item>
+      <title>[사회] 법치주의와 사회정의, 시민사회의 진화</title>
+      <link>https://korean-crossword-puzzle.vercel.app/#knowledge/society</link>
+      <guid>https://korean-crossword-puzzle.vercel.app/#knowledge/society</guid>
+      <description>사회안전망과 복지국가, 롤스의 정의론, 디지털 시대의 필터버블과 알고리즘 편향, 징벌적 손해배상 및 공소시효 등 현대 사회의 핵심 쟁점과 법률 상식을 해설합니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    </item>
+
+    <item>
+      <title>[문화] 유네스코 세계유산과 훈민정음의 과학적 미학</title>
+      <link>https://korean-crossword-puzzle.vercel.app/#knowledge/culture</link>
+      <guid>https://korean-crossword-puzzle.vercel.app/#knowledge/culture</guid>
+      <description>수원화성과 석굴암, 종묘 등 유네스코 세계유산의 가치, 세계기록유산인 훈민정음 해례본과 조선왕조실록, 전통 한옥의 배산임수 과학과 K-컬처의 융합 미학을 탐구합니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    </item>
+
+    <item>
+      <title>[스포츠] 올림피즘과 세이버메트릭스, 경기 규칙의 진화</title>
+      <link>https://korean-crossword-puzzle.vercel.app/#knowledge/sports</link>
+      <guid>https://korean-crossword-puzzle.vercel.app/#knowledge/sports</guid>
+      <description>근대 올림픽의 페어플레이 정신, 패럴림픽의 포용 가치, 축구 오프사이드와 농구 슛클락 규칙 진화, 세이버메트릭스(OPS, WAR, 머니볼)의 통계적 스포츠 혁신을 다룹니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    </item>
+
+    <item>
+      <title>[한국사] 고조선 건국이념부터 대한민국 임시정부의 법통까지</title>
+      <link>https://korean-crossword-puzzle.vercel.app/#knowledge/koreanHistory</link>
+      <guid>https://korean-crossword-puzzle.vercel.app/#knowledge/koreanHistory</guid>
+      <description>단군왕검의 홍익인간 정신, 삼국통일과 문화 융합, 고려의 팔만대장경, 조선의 경국대전 법치 체제, 실학사상과 3·1운동, 대한민국 임시정부의 정통성을 조명합니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    </item>
+
+    <item>
+      <title>[세계사] 인류 문명의 태동과 근대 시민혁명, 현대 국제연합 체제</title>
+      <link>https://korean-crossword-puzzle.vercel.app/#knowledge/worldHistory</link>
+      <guid>https://korean-crossword-puzzle.vercel.app/#knowledge/worldHistory</guid>
+      <description>메소포타미아와 이집트 등 4대 문명, 함무라비 법전, 르네상스 인문주의, 3대 시민혁명과 산업혁명, 양차 세계대전과 현대 국제연합(UN) 다자주의 체제를 개괄합니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    </item>
+
+    <item>
+      <title>[음악] 정간보와 판소리 장단, 서양 고전 클래식 오케스트라의 변천</title>
+      <link>https://korean-crossword-puzzle.vercel.app/#knowledge/music</link>
+      <guid>https://korean-crossword-puzzle.vercel.app/#knowledge/music</guid>
+      <description>세종대왕의 정간보와 국악 12율명, 궁상각치우 오음음계, 판소리 5바탕의 장단과 미학, 바로크·고전·낭만주의 클래식 악파 변천과 오케스트라 편성 원리를 소개합니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    </item>
+
+    <item>
+      <title>[미술] 진경산수화와 풍속화, 르네상스 원근법에서 입체주의까지</title>
+      <link>https://korean-crossword-puzzle.vercel.app/#knowledge/art</link>
+      <guid>https://korean-crossword-puzzle.vercel.app/#knowledge/art</guid>
+      <description>겸재 정선의 진경산수화와 김홍도·신윤복의 조선 풍속화, 르네상스의 선원근법과 다빈치 스푸마토 기법, 19세기 인상주의와 피카소의 입체주의 미학 변천사를 안내합니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0900</pubDate>
+    </item>
+  </channel>
+</rss>
