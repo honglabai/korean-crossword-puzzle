@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { BoardData, Direction, PlacedWord, BoardRecord, CategoryId } from './types/puzzle';
 import { ThemeId, THEMES, getDefaultThemeForLevel } from './types/theme';
+import { getCategoryMeta } from './data/categoryRegistry';
 import { getBoardForCategoryAndLevel, generateFreshBoard } from './data/boardProvider';
 import { getRandomBackgroundForLevel, BackgroundItem } from './utils/backgroundManager';
 import { sounds } from './utils/audio';
@@ -26,6 +27,7 @@ import { LegalPolicyModal, PolicyTab } from './components/LegalPolicyModal';
 import { SiteFooter } from './components/SiteFooter';
 import { AdBannerSlot } from './components/AdBannerSlot';
 import { KnowledgeArticleHub } from './components/KnowledgeArticleHub';
+import { PuzzleStageKnowledgeGuide } from './components/PuzzleStageKnowledgeGuide';
 import { InstallAppModal } from './components/InstallAppModal';
 import { usePWAInstall } from './utils/usePWAInstall';
 import confetti from 'canvas-confetti';
@@ -1146,6 +1148,16 @@ export function App() {
                 </div>
               </div>
             </main>
+
+            {/* Current Puzzle Word Encyclopedia & Study Guide (High Publisher Content) */}
+            <PuzzleStageKnowledgeGuide
+              placedWords={board.placedWords}
+              categoryName={getCategoryMeta(selectedCategory).name}
+              level={currentLevel}
+              boardNumber={board.boardNumber}
+              completedWordIds={completedWordIds}
+              onSelectWord={handleSelectWord}
+            />
 
             {/* High-Value Publisher Content: 8대 분야 시사·교양 심층 지식 백과 & 상식 학습 칼럼 */}
             <section className="max-w-6xl mx-auto px-3 sm:px-4 my-6" aria-label="8대 지식 탐구 백과">
