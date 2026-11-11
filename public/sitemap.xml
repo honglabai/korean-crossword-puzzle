@@ -1,85 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/</loc>
+    <loc>https://crossword.honglabai.com/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#challenge</loc>
+    <loc>https://crossword.honglabai.com/#challenge</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge</loc>
+    <loc>https://crossword.honglabai.com/#knowledge</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge/politics</loc>
+    <loc>https://crossword.honglabai.com/#knowledge/politics</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge/society</loc>
+    <loc>https://crossword.honglabai.com/#knowledge/society</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge/culture</loc>
+    <loc>https://crossword.honglabai.com/#knowledge/culture</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge/sports</loc>
+    <loc>https://crossword.honglabai.com/#knowledge/sports</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge/koreanHistory</loc>
+    <loc>https://crossword.honglabai.com/#knowledge/koreanHistory</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge/worldHistory</loc>
+    <loc>https://crossword.honglabai.com/#knowledge/worldHistory</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge/music</loc>
+    <loc>https://crossword.honglabai.com/#knowledge/music</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#knowledge/art</loc>
+    <loc>https://crossword.honglabai.com/#knowledge/art</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#wordbook</loc>
+    <loc>https://crossword.honglabai.com/#wordbook</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#records</loc>
+    <loc>https://crossword.honglabai.com/#records</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://korean-crossword-puzzle.vercel.app/#mypage</loc>
+    <loc>https://crossword.honglabai.com/#mypage</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
