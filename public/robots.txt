@@ -1,5 +1,5 @@
 # Robots.txt for https://crossword.honglabai.com/
-# Optimized for Google SEO and Naver Search Advisor (네이버 서치어드바이저)
+# Optimized for Google SEO, Naver Search Advisor (네이버 서치어드바이저), and Google AdSense
 
 User-agent: *
 Allow: /
@@ -8,7 +8,7 @@ Allow: /
 User-agent: Yeti
 Allow: /
 
-# Google Search Engine & AdSense Bots
+# Google Search Engine & AdSense Verification Bots
 User-agent: Googlebot
 Allow: /
 
@@ -16,6 +16,12 @@ User-agent: Googlebot-Image
 Allow: /
 
 User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+User-agent: AdsBot-Google-Mobile
 Allow: /
 
 # Daum / Kakao Search Engine Bot

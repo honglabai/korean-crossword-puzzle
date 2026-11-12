@@ -34,17 +34,65 @@ import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'politics_crossword_progress_v5';
 
+// SEO & Deep Linking: Resolve category from query param e.g. ?category=politics or hash e.g. #knowledge/politics
+const getInitialCategory = (): CategoryId => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get('category')?.toUpperCase();
+    const VALID: CategoryId[] = [
+      'POLITICS',
+      'SOCIETY',
+      'CULTURE',
+      'SPORTS',
+      'KOREAN_HISTORY',
+      'WORLD_HISTORY',
+      'MUSIC',
+      'ART',
+    ];
+    if (cat) {
+      const normalized = cat.replace('-', '_');
+      const found = VALID.find(
+        (c) => c === normalized || c.replace('_', '') === normalized.replace('_', '')
+      );
+      if (found) return found;
+    }
+    const hash = window.location.hash.toLowerCase();
+    for (const c of VALID) {
+      if (hash.includes(c.toLowerCase().replace('_', '')) || hash.includes(c.toLowerCase())) {
+        return c;
+      }
+    }
+  }
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && JSON.parse(saved).selectedCategory) {
+      return JSON.parse(saved).selectedCategory;
+    }
+  } catch {}
+  return 'POLITICS';
+};
+
+// SEO & Deep Linking: Resolve active tab from query param e.g. ?tab=knowledge or hash
+const getInitialTab = (): TabType => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab')?.toUpperCase();
+    const VALID_TABS: TabType[] = ['CHALLENGE', 'KNOWLEDGE', 'WORDBOOK', 'RECORDS', 'MYPAGE'];
+    if (tabParam && VALID_TABS.includes(tabParam as TabType)) {
+      return tabParam as TabType;
+    }
+    const hash = window.location.hash.toLowerCase();
+    if (hash.includes('knowledge')) return 'KNOWLEDGE';
+    if (hash.includes('wordbook')) return 'WORDBOOK';
+    if (hash.includes('record')) return 'RECORDS';
+    if (hash.includes('mypage') || hash.includes('setting')) return 'MYPAGE';
+  }
+  return 'CHALLENGE';
+};
+
 export function App() {
   // Selected Knowledge Category (정치, 사회, 문화, 스포츠, 한국사, 세계사, 음악, 미술)
-  const [selectedCategory, setSelectedCategory] = useState<CategoryId>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && JSON.parse(saved).selectedCategory) {
-        return JSON.parse(saved).selectedCategory;
-      }
-    } catch {}
-    return 'POLITICS';
-  });
+  const [selectedCategory, setSelectedCategory] = useState<CategoryId>(getInitialCategory);
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
 
@@ -215,8 +263,23 @@ export function App() {
   const [wrongCells, setWrongCells] = useState<Set<string>>(new Set());
   const [revealedChosungs, setRevealedChosungs] = useState<Set<string>>(new Set());
 
-  // Bottom Navigation Active Tab ('CHALLENGE' | 'RECORDS' | 'WORDBOOK' | 'MYPAGE')
-  const [activeTab, setActiveTab] = useState<TabType>('CHALLENGE');
+  // Bottom Navigation Active Tab ('CHALLENGE' | 'KNOWLEDGE' | 'WORDBOOK' | 'RECORDS' | 'MYPAGE')
+  const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
+
+  // SEO & Deep Linking: Synchronize URL query parameters without reloading
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('category', selectedCategory.toLowerCase());
+      if (activeTab === 'CHALLENGE') {
+        url.searchParams.delete('tab');
+      } else {
+        url.searchParams.set('tab', activeTab.toLowerCase());
+      }
+      window.history.replaceState(null, '', url.pathname + url.search);
+    } catch {}
+  }, [selectedCategory, activeTab]);
 
   // Game Stopwatch / Timer State
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);

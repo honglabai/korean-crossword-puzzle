@@ -1,86 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Main Home Page -->
   <url>
     <loc>https://crossword.honglabai.com/</loc>
-    <lastmod>2026-11-11</lastmod>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- 8 Main Knowledge Categories (Query Parameter Deep Links) -->
   <url>
-    <loc>https://crossword.honglabai.com/#challenge</loc>
-    <lastmod>2026-11-11</lastmod>
+    <loc>https://crossword.honglabai.com/?category=politics</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://crossword.honglabai.com/#knowledge</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://crossword.honglabai.com/?category=society</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://crossword.honglabai.com/#knowledge/politics</loc>
-    <lastmod>2026-11-11</lastmod>
+    <loc>https://crossword.honglabai.com/?category=culture</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://crossword.honglabai.com/?category=sports</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://crossword.honglabai.com/?category=korean_history</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://crossword.honglabai.com/?category=world_history</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://crossword.honglabai.com/?category=music</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://crossword.honglabai.com/?category=art</loc>
+    <lastmod>2026-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- Main Functional Tabs -->
+  <url>
+    <loc>https://crossword.honglabai.com/?tab=knowledge</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://crossword.honglabai.com/#knowledge/society</loc>
-    <lastmod>2026-11-11</lastmod>
+    <loc>https://crossword.honglabai.com/?tab=wordbook</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://crossword.honglabai.com/#knowledge/culture</loc>
-    <lastmod>2026-11-11</lastmod>
+    <loc>https://crossword.honglabai.com/?tab=records</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://crossword.honglabai.com/#knowledge/sports</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://crossword.honglabai.com/#knowledge/koreanHistory</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://crossword.honglabai.com/#knowledge/worldHistory</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://crossword.honglabai.com/#knowledge/music</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://crossword.honglabai.com/#knowledge/art</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://crossword.honglabai.com/#wordbook</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://crossword.honglabai.com/#records</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://crossword.honglabai.com/#mypage</loc>
-    <lastmod>2026-11-11</lastmod>
+    <loc>https://crossword.honglabai.com/?tab=mypage</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
