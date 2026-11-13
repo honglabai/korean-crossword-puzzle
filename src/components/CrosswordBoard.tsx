@@ -261,6 +261,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                       onChange={handleInputChange}
                       onKeyDown={handleKeyDown}
                       onCompositionEnd={handleCompositionEnd}
+                      onClick={() => onCellClick(r, c)}
                       inputMode="text"
                       autoComplete="off"
                       autoCapitalize="off"

@@ -440,6 +440,26 @@ export function App() {
     return count > 1;
   }, [selectedCell, board.placedWords]);
 
+  // Check if active word has any intersection of across & down words
+  const hasWordIntersection = useMemo(() => {
+    if (!activeWord) return false;
+    const otherDir: Direction = activeWord.direction === 'across' ? 'down' : 'across';
+    for (let i = 0; i < activeWord.length; i++) {
+      const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
+      const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
+      const hasCross = board.placedWords.some((pw) => {
+        if (pw.direction !== otherDir) return false;
+        if (pw.direction === 'across') {
+          return pw.startRow === wr && wc >= pw.startCol && wc < pw.startCol + pw.length;
+        } else {
+          return pw.startCol === wc && wr >= pw.startRow && wr < pw.startRow + pw.length;
+        }
+      });
+      if (hasCross) return true;
+    }
+    return false;
+  }, [activeWord, board.placedWords]);
+
   // Set of completed word IDs
   const completedWordIds = useMemo(() => {
     const completed = new Set<string>();
@@ -499,8 +519,23 @@ export function App() {
       return;
     }
 
-    // New cell clicked
+    // Check if clicked cell is already part of the current active word
+    const isCellInCurrentWord = activeWord && wordsAtCell.some((w) => w.id === activeWord.id);
+
     setSelectedCell({ row: r, col: c });
+
+    // If clicking an intersection cell that is already in the active word, switch to the other direction!
+    // (e.g. user is on an across word and clicks the last cell which has a vertical word)
+    if (isCellInCurrentWord && wordsAtCell.length > 1) {
+      const otherWord = wordsAtCell.find((w) => w.direction !== activeDirection);
+      if (otherWord) {
+        setActiveDirection(otherWord.direction);
+        setActiveWordId(otherWord.id);
+        return;
+      }
+    }
+
+    // Otherwise, prefer matching current active direction if available
     const matchingWord =
       wordsAtCell.find((w) => w.direction === activeDirection) || wordsAtCell[0];
     if (matchingWord) {
@@ -524,6 +559,37 @@ export function App() {
       const nextWord = wordsAtCell.find((w) => w.direction !== activeDirection) || wordsAtCell[0];
       setActiveDirection(nextWord.direction);
       setActiveWordId(nextWord.id);
+    } else if (activeWord) {
+      // If current cell has no intersection, find the intersecting word in the other direction along activeWord
+      const targetDir: Direction = activeDirection === 'across' ? 'down' : 'across';
+      let foundWord: PlacedWord | null = null;
+      let targetPos: { row: number; col: number } | null = null;
+
+      for (let i = 0; i < activeWord.length; i++) {
+        const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
+        const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
+        const cross = board.placedWords.find((pw) => {
+          if (pw.direction !== targetDir) return false;
+          if (pw.direction === 'across') {
+            return pw.startRow === wr && wc >= pw.startCol && wc < pw.startCol + pw.length;
+          } else {
+            return pw.startCol === wc && wr >= pw.startRow && wr < pw.startRow + pw.length;
+          }
+        });
+        if (cross) {
+          foundWord = cross;
+          targetPos = { row: wr, col: wc };
+          if ((activeWord.direction === 'across' && wc >= col) || (activeWord.direction === 'down' && wr >= row)) {
+            break;
+          }
+        }
+      }
+
+      if (foundWord && targetPos) {
+        setSelectedCell(targetPos);
+        setActiveDirection(foundWord.direction);
+        setActiveWordId(foundWord.id);
+      }
     }
   };
 
@@ -1153,7 +1219,7 @@ export function App() {
                       activeWord={activeWord}
                       activeDirection={activeDirection}
                       theme={currentTheme}
-                      isIntersection={isIntersection}
+                      isIntersection={isIntersection || hasWordIntersection}
                       hintBalance={hintBalance}
                       isLargeFont={isLargeFont}
                       selectedCategory={selectedCategory}

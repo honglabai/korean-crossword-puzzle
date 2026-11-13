@@ -179,17 +179,18 @@ export function combineHangulInput(
     }
   }
 
-  // 2. Multi-character buffer check: Syllable + consonant (e.g. '화ㄱ' or '미ㄴ')
+  // 2. Multi-character buffer check: Syllable + consonant (e.g. '과ㄴ' -> '관', '미ㄴ' -> '민', '화ㄱ' -> '확')
   if (trimmed.length === 2 && isCompleteSyllable(trimmed[0]) && isConsonant(trimmed[1])) {
     const dec = decompose(trimmed[0]);
     if (dec && !dec.jong) {
-      // If solution is known and matches trimmed[0], or solution has no 받침:
-      // The second consonant trimmed[1] belongs to the NEXT cell!
-      if (solutionChar && (trimmed[0] === solutionChar || !solutionHasJong)) {
+      // ONLY overflow consonant to next cell if current syllable ALREADY matches complete solution
+      // AND solution explicitly has NO final consonant (받침)!
+      // (e.g. solution is '비' and user already typed '비', and now types 'ㄹ' for the next cell '례')
+      if (solutionChar && trimmed[0] === solutionChar && !solutionHasJong) {
         return { currentCell: trimmed[0], nextCell: trimmed[1], shouldAdvance: true };
       }
 
-      // If solution expects this 받침 (e.g. '미' + 'ㄴ' for '민')
+      // If solution expects this 받침 (e.g. '과' + 'ㄴ' for '관', '미' + 'ㄴ' for '민')
       if (solDec && solDec.jong === trimmed[1]) {
         const combined = compose(dec.cho, dec.jung, trimmed[1]);
         if (combined) {
@@ -197,12 +198,7 @@ export function combineHangulInput(
         }
       }
 
-      // If solution has no 받침, overflow consonant to next cell
-      if (!solutionHasJong) {
-        return { currentCell: trimmed[0], nextCell: trimmed[1], shouldAdvance: true };
-      }
-
-      // Otherwise combine into 받침 if valid
+      // Combine into 받침 if valid final consonant (e.g. '과' + 'ㄴ' = '관')
       if (JONG_LIST.includes(trimmed[1])) {
         const combined = compose(dec.cho, dec.jung, trimmed[1]);
         if (combined) {
@@ -299,17 +295,13 @@ export function combineHangulInput(
           return { currentCell: potentialSyllable, shouldAdvance: true };
         }
 
-        // If current cell already matches solution (e.g. solution is '비' and user types 'ㄹ' for next cell '례')
-        if (solutionChar && prevChar === solutionChar) {
+        // ONLY overflow to next cell if current cell ALREADY matches complete solution AND solution explicitly has NO 받침!
+        // (e.g. solution is '비' and user types 'ㄹ' for next cell '례')
+        if (solutionChar && prevChar === solutionChar && !solutionHasJong) {
           return { currentCell: prevChar, nextCell: trimmed, shouldAdvance: true };
         }
 
-        // If solution has NO 받침, incoming consonant definitely belongs to next cell!
-        if (!solutionHasJong) {
-          return { currentCell: prevChar, nextCell: trimmed, shouldAdvance: true };
-        }
-
-        // Otherwise, if it can form a valid syllable with this 받침
+        // Otherwise, if it can form a valid syllable with this 받침 (e.g. '과' + 'ㄴ' = '관', '비' + 'ㄹ' = '빌')
         if (potentialSyllable && JONG_LIST.includes(trimmed)) {
           return { currentCell: potentialSyllable, shouldAdvance: true };
         }
