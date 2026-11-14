@@ -12,7 +12,10 @@
     "sudoku:test": "npm --prefix my-love-sudoku test",
     "honglabai:dev": "npm --prefix honglabai run dev",
     "honglabai:build": "npm --prefix honglabai run build",
-    "honglabai:test": "npm --prefix honglabai run test"
+    "honglabai:test": "npm --prefix honglabai run test",
+    "newsletter:dev": "npm --prefix newsletter-studio run dev",
+    "newsletter:build": "npm --prefix newsletter-studio run build",
+    "newsletter:test": "npm --prefix newsletter-studio test"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
