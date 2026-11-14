@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, FileText, Info, Mail, ExternalLink, Code2 } from 'lucide-react';
+import { Shield, FileText, Info, Mail } from 'lucide-react';
 import { PolicyTab } from './LegalPolicyModal';
 import { sounds } from '../utils/audio';
 
@@ -80,22 +80,10 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({ onOpenPolicy }) => {
         </div>
       </div>
 
-      {/* Bottom Copyright & GitHub */}
-      <div className="mt-5 pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-400">
+      {/* Bottom Copyright */}
+      <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-center text-[10px] text-slate-400 text-center">
         <div>
           © 2026 지식 탐구 낱말퍼즐 (honglabai). All rights reserved. Google AdSense 광고 정책을 준수합니다.
-        </div>
-        <div className="flex items-center gap-2">
-          <a
-            href="https://github.com/honglabai/korean-crossword-puzzle"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-slate-700 transition flex items-center gap-1"
-          >
-            <Code2 className="w-3 h-3 text-slate-500" />
-            <span>GitHub 오픈소스</span>
-            <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
-          </a>
         </div>
       </div>
     </footer>
