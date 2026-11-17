@@ -91,6 +91,8 @@ export const CATEGORIES_META: CategoryMeta[] = [
   },
 ];
 
+export const CATEGORIES_REGISTRY = CATEGORIES_META;
+
 export const CATEGORY_MAP: Record<CategoryId, CategoryMeta> = CATEGORIES_META.reduce(
   (acc, meta) => {
     acc[meta.id] = meta;

@@ -1,13 +1,11 @@
 import React, { useState, useRef } from 'react';
 import {
-  User,
   Award,
   Lightbulb,
   Sparkles,
   Volume2,
   VolumeX,
   Palette,
-  RotateCcw,
   Check,
   Edit2,
   Trophy,
@@ -15,8 +13,10 @@ import {
   Download,
   Upload,
   Type,
-  FileCheck,
-  AlertCircle,
+  Shield,
+  FileText,
+  Info,
+  Mail,
 } from 'lucide-react';
 import { ColorTheme, ThemeId, THEMES } from '../types/theme';
 import { CategoryId } from '../types/puzzle';
@@ -24,7 +24,8 @@ import { CATEGORIES_META, getCategoryMeta } from '../data/categoryRegistry';
 import { sounds } from '../utils/audio';
 import { exportUserDataJson, importUserDataJson } from '../utils/storageBackup';
 import { PolicyTab } from './LegalPolicyModal';
-import { Shield, FileText, Info, Mail } from 'lucide-react';
+import { FontSizeSetting } from '../types/progress';
+import { isCategoryMasterEligible } from '../services/storageService';
 
 interface MyPageViewProps {
   currentLevel: number;
@@ -32,15 +33,22 @@ interface MyPageViewProps {
   hintBalance: number;
   currentTheme: ColorTheme;
   isMuted: boolean;
-  isLargeFont: boolean;
+  fontSize: FontSizeSetting;
+  highContrast?: boolean;
   selectedCategory?: CategoryId;
+  categoryClears?: Record<number, number>;
+  totalClearedBoards?: number;
+  unlockedAchievementsCount?: number;
+  totalAchievementsCount?: number;
   onSelectCategory?: (category: CategoryId) => void;
   onSelectTheme: (themeId: ThemeId) => void;
   onToggleSound: () => void;
-  onToggleLargeFont: () => void;
+  onChangeFontSize: (size: FontSizeSetting) => void;
+  onToggleHighContrast?: () => void;
   onOpenTest: () => void;
   onOpenAdModal: () => void;
   onOpenCertificate: () => void;
+  onOpenAchievements?: () => void;
   onOpenInstallModal?: () => void;
   onOpenPolicy?: (tab: PolicyTab) => void;
   onResetProgress: () => void;
@@ -48,20 +56,27 @@ interface MyPageViewProps {
 }
 
 export const MyPageView: React.FC<MyPageViewProps> = ({
-  currentLevel,
+  currentLevel: _currentLevel,
   maxUnlockedLevel,
   hintBalance,
   currentTheme,
   isMuted,
-  isLargeFont,
+  fontSize,
+  highContrast = false,
   selectedCategory = 'POLITICS',
+  categoryClears = {},
+  totalClearedBoards = 0,
+  unlockedAchievementsCount = 0,
+  totalAchievementsCount = 11,
   onSelectCategory,
   onSelectTheme,
   onToggleSound,
-  onToggleLargeFont,
+  onChangeFontSize,
+  onToggleHighContrast,
   onOpenTest,
   onOpenAdModal,
   onOpenCertificate,
+  onOpenAchievements,
   onOpenInstallModal,
   onOpenPolicy,
   onResetProgress,
@@ -82,12 +97,23 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentCatMeta = getCategoryMeta(selectedCategory);
 
-  // Domain titles by unlocked level and active category
+  // Verify master certificate eligibility
+  const masterEligibility = isCategoryMasterEligible(selectedCategory, {
+    currentLevel: maxUnlockedLevel,
+    clearCountInLevel: 0,
+    levelClears: categoryClears,
+    maxUnlockedLevel,
+    isTested: true,
+    totalClearedBoards,
+  });
+
   const getDomainRank = (lvl: number, cat: CategoryId) => {
     const meta = getCategoryMeta(cat);
-    if (lvl >= 10) return { title: `최고 ${meta.name} 마스터`, grade: '특급 (국가 최고 권위)', icon: meta.icon, color: 'text-purple-600 bg-purple-50 border-purple-200' };
+    if (lvl >= 10 && masterEligibility.eligible) {
+      return { title: `최고 ${meta.name} 마스터`, grade: '특급 (국가 최고 권위)', icon: meta.icon, color: 'text-purple-600 bg-purple-50 border-purple-200' };
+    }
     if (lvl >= 8) return { title: `수석 ${meta.name} 연구위원`, grade: '고급 (전문 사상가)', icon: '⚖️', color: 'text-indigo-600 bg-indigo-50 border-indigo-200' };
-    if (lvl >= 5) return { title: `${meta.name} 전문 정책분석관`, grade: '중급 (정책 전문가)', icon: '🌐', color: 'text-amber-700 bg-amber-50 border-amber-200' };
+    if (lvl >= 5) return { title: `${meta.name} 전문 분석관`, grade: '중급 (정책 전문가)', icon: '🌐', color: 'text-amber-700 bg-amber-50 border-amber-200' };
     if (lvl >= 3) return { title: `${meta.name} 실무 연구원`, grade: '초급 2 (입법·실무)', icon: '📜', color: 'text-sky-700 bg-sky-50 border-sky-200' };
     return { title: `${meta.name} 입문 탐구자`, grade: '초급 1 (시민사회)', icon: '🌱', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
   };
@@ -95,7 +121,7 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
   const rank = getDomainRank(maxUnlockedLevel, selectedCategory);
 
   const handleSaveNickname = () => {
-    const trimmed = editInput.trim() || '대한민국 헌법학도';
+    const trimmed = editInput.trim() || '대한민국 지식탐구자';
     setNickname(trimmed);
     localStorage.setItem('politics_crossword_nickname', trimmed);
     setIsEditingNickname(false);
@@ -108,16 +134,10 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
     if (ok) {
       setBackupStatus({
         type: 'success',
-        text: '모든 게임 기록과 인증서가 백업 JSON 파일로 다운로드되었습니다.',
+        text: '내 게임 기록 백업 파일(JSON)이 안전하게 다운로드되었습니다.',
       });
-      sounds.playWordComplete();
-    } else {
-      setBackupStatus({
-        type: 'error',
-        text: '백업 파일 생성에 실패했습니다.',
-      });
+      setTimeout(() => setBackupStatus(null), 4000);
     }
-    setTimeout(() => setBackupStatus(null), 4000);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,133 +146,111 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
 
     sounds.playKey();
     const result = await importUserDataJson(file);
-
     if (result.success) {
       setBackupStatus({ type: 'success', text: result.message });
-      sounds.playVictory();
-      if (onDataRestored) {
-        onDataRestored();
-      } else {
-        setTimeout(() => window.location.reload(), 1200);
-      }
+      if (onDataRestored) onDataRestored();
     } else {
       setBackupStatus({ type: 'error', text: result.message });
-      sounds.playError();
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
     setTimeout(() => setBackupStatus(null), 5000);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-4 pb-28 animate-in fade-in duration-200">
-      {/* 1. Header */}
-      <div className="text-center mb-5">
-        <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
-          <User className="w-6 h-6 text-[#0288d1]" />
-          <span>마이페이지 & 설정</span>
-        </h2>
-        <p className="text-xs text-slate-500 mt-1">
-          나의 분야별 직급, 인증서, 힌트 보유량, 데이터 백업 및 게임 환경을 관리하세요.
-        </p>
-      </div>
-
-      {/* Backup Notification Toast */}
+      {/* Backup notification banner */}
       {backupStatus && (
         <div
-          className={`mb-4 p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 shadow-sm ${
+          className={`p-3.5 mb-4 rounded-2xl border text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200 ${
             backupStatus.type === 'success'
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-              : 'bg-rose-50 border-rose-300 text-rose-800'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              : 'bg-red-50 text-red-800 border-red-200'
           }`}
         >
-          {backupStatus.type === 'success' ? (
-            <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-          )}
+          <span>{backupStatus.type === 'success' ? '✅' : '⚠️'}</span>
           <span>{backupStatus.text}</span>
         </div>
       )}
 
-      {/* 2. User Profile Card */}
+      {/* 1. User Profile Header Card */}
       <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm mb-4">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0288d1] to-sky-400 flex items-center justify-center text-3xl shadow-md shrink-0">
-            {rank.icon}
-          </div>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0288d1] to-sky-400 flex items-center justify-center text-white shadow-md text-3xl shrink-0">
+              {currentCatMeta.icon}
+            </div>
 
-          <div className="flex-1 text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="text-center sm:text-left">
               {isEditingNickname ? (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 mt-1">
                   <input
                     type="text"
                     value={editInput}
                     onChange={(e) => setEditInput(e.target.value)}
                     maxLength={15}
-                    style={{ fontSize: '16px' }}
-                    className="px-2.5 py-1 text-base font-black border border-[#0288d1] rounded-lg focus:outline-hidden"
+                    className="border-b-2 border-[#0288d1] px-2 py-0.5 text-base font-black text-slate-800 focus:outline-hidden"
+                    autoFocus
                   />
                   <button
                     onClick={handleSaveNickname}
-                    className="p-1.5 bg-[#0288d1] text-white rounded-lg text-xs font-bold"
+                    className="p-1 bg-[#0288d1] text-white rounded-lg hover:bg-[#0277bd]"
                   >
                     <Check className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-black text-slate-800">{nickname}</h3>
-                  <button
-                    onClick={() => {
-                      setEditInput(nickname);
-                      setIsEditingNickname(true);
-                    }}
-                    className="p-1 text-slate-400 hover:text-slate-600 rounded-md"
-                    title="닉네임 수정"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
+                <div
+                  onClick={() => {
+                    setEditInput(nickname);
+                    setIsEditingNickname(true);
+                  }}
+                  className="flex items-center justify-center sm:justify-start gap-1.5 cursor-pointer group"
+                >
+                  <h2 className="text-lg font-black text-slate-800 tracking-tight group-hover:text-[#0288d1] transition">
+                    {nickname}
+                  </h2>
+                  <Edit2 className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#0288d1]" />
                 </div>
               )}
 
-              <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${rank.color}`}>
-                {rank.grade}
-              </span>
-            </div>
-
-            <p className="text-sm font-bold text-slate-700 mt-1">
-              현재 관문 등급: <span className="text-[#0288d1]">{rank.title}</span> (Lv.{maxUnlockedLevel} 해금)
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
-              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
-                도전 진행도: Lv.{currentLevel}
-              </span>
-              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
-                최고 관문: Lv.{maxUnlockedLevel}
-              </span>
-              <span className="text-xs font-bold text-[#0288d1] bg-sky-50 border border-sky-200 px-2.5 py-1 rounded-lg">
-                {currentCatMeta.icon} {currentCatMeta.name} 분야
-              </span>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mt-1.5">
+                <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${rank.color}`}>
+                  {rank.title}
+                </span>
+                <span className="text-[10px] text-slate-400 font-semibold">
+                  {rank.grade}
+                </span>
+              </div>
             </div>
           </div>
+
+          {/* Achievements pill */}
+          {onOpenAchievements && (
+            <button
+              onClick={() => {
+                sounds.playKey();
+                onOpenAchievements();
+              }}
+              className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-2xl text-xs font-black transition flex items-center gap-1.5 shrink-0"
+            >
+              <Trophy className="w-4 h-4 text-amber-600" />
+              <span>업적 ({unlockedAchievementsCount}/{totalAchievementsCount})</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 2.5 Active Category Selection & Progress */}
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm mb-4">
-        <h3 className="text-sm font-black text-slate-800 mb-1 flex items-center gap-2">
-          <span className="text-lg">{currentCatMeta.icon}</span>
-          <span>도전 지식 분야 선택:</span>
-          <span className="text-[#0288d1]">{currentCatMeta.fullName}</span>
-        </h3>
-        <p className="text-xs text-slate-500 mb-3">
-          원하는 분야를 누르면 해당 분야의 전용 낱말퍼즐로 즉시 변경됩니다.
-        </p>
+      {/* 2. Knowledge Category Switcher */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-[#0288d1]" />
+            <span>선택된 지식 분야</span>
+          </h3>
+          <span className="text-xs text-[#0288d1] font-bold">
+            현재: {currentCatMeta.name}({currentCatMeta.fullName})
+          </span>
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {CATEGORIES_META.map((meta) => {
@@ -264,15 +262,15 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
                   sounds.playKey();
                   if (onSelectCategory) onSelectCategory(meta.id);
                 }}
-                className={`p-2.5 rounded-xl border text-xs font-black transition flex items-center gap-1.5 ${
+                className={`p-2.5 rounded-2xl border text-xs font-bold transition flex items-center gap-2 ${
                   isSelected
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm ring-1 ring-blue-400'
+                    ? 'bg-sky-50 text-[#0288d1] border-sky-300 shadow-2xs ring-1 ring-sky-300'
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
               >
                 <span>{meta.icon}</span>
                 <span>{meta.name}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 ml-auto text-amber-300" />}
+                {isSelected && <Check className="w-3.5 h-3.5 ml-auto text-[#0288d1]" />}
               </button>
             );
           })}
@@ -287,14 +285,22 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
                 <Trophy className="w-4 h-4 text-amber-500" />
-                정치학 마스터 인증서
+                {currentCatMeta.name} 마스터 인증서
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
-                {maxUnlockedLevel >= 10 ? '발급 완료' : '진행 중'}
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  masterEligibility.eligible
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}
+              >
+                {masterEligibility.eligible
+                  ? '발급 완료'
+                  : `${masterEligibility.clearedBoards} / 30 관문 완료`}
               </span>
             </div>
             <p className="text-xs text-slate-600 mb-3">
-              10개 레벨의 모든 관문을 돌파하면 공식 대한민국 정치학 마스터 인증서가 수여됩니다.
+              {currentCatMeta.name} 10개 레벨 30개 모든 관문을 통과하면 공식 대한민국 마스터 인증서가 수여됩니다.
             </p>
           </div>
 
@@ -303,10 +309,14 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
               sounds.playKey();
               onOpenCertificate();
             }}
-            className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5"
+            className={`w-full py-2.5 font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 ${
+              masterEligibility.eligible
+                ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                : 'bg-slate-800 hover:bg-slate-900 text-white'
+            }`}
           >
             <Award className="w-4 h-4" />
-            <span>인증서 열람 / 확인</span>
+            <span>{masterEligibility.eligible ? '인증서 열람 / 인쇄' : '인증서 도전 현황 보기'}</span>
           </button>
         </div>
 
@@ -323,7 +333,7 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-600 mb-3">
-              매일 첫 접속 시 무료 힌트 +3개가 충전되며, 광고 시청을 통해 추가로 무료 충전할 수 있습니다.
+              매일 첫 접속 시 출석 보너스로 힌트가 자동 충전되며, 광고 시청을 통해 추가로 무료 충전할 수 있습니다.
             </p>
           </div>
 
@@ -340,141 +350,76 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
         </div>
       </div>
 
-      {/* 4. Data Backup & Restore Feature (Resolves #1 User Pain Point: Data Loss) */}
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm mb-4">
-        <h3 className="text-base font-black text-slate-800 mb-2 flex items-center gap-2">
-          <Download className="w-4 h-4 text-[#0288d1]" />
-          <span>데이터 안전 백업 및 복원</span>
+      {/* 4. Accessibility & Senior Friendly Settings */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm mb-4 space-y-4">
+        <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
+          <Type className="w-5 h-5 text-[#0288d1]" />
+          <span>시각 편의 및 접근성 설정 (시니어 특화)</span>
         </h3>
-        <p className="text-xs text-slate-500 mb-4">
-          기기를 변경하거나 브라우저 캐시 삭제 시에도 안심하세요! 게임 진행도와 인증서를 파일로 저장하고 언제든 복원할 수 있습니다.
-        </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {/* Export JSON Button */}
-          <button
-            onClick={handleExportBackup}
-            className="py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-black shadow-xs transition flex items-center justify-center gap-2"
-          >
-            <Download className="w-4 h-4 text-sky-300" />
-            <span>내 기록 백업 파일 저장 (JSON)</span>
-          </button>
-
-          {/* Import JSON Button */}
-          <button
-            onClick={() => {
-              sounds.playKey();
-              fileInputRef.current?.click();
-            }}
-            className="py-2.5 px-3 bg-sky-50 hover:bg-sky-100 text-[#0288d1] border border-sky-200 rounded-xl text-xs font-black shadow-xs transition flex items-center justify-center gap-2"
-          >
-            <Upload className="w-4 h-4 text-[#0288d1]" />
-            <span>백업 파일 불러오기 및 복원</span>
-          </button>
-
-          {/* Hidden File Input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </div>
-      </div>
-
-      {/* 5. Diagnostic Placement Test Retake */}
-      <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 p-4 shadow-xs mb-4 flex items-center justify-between">
-        <div>
-          <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>정치 실력 진단 주관식 테스트</span>
-          </h4>
-          <p className="text-xs text-slate-500 mt-0.5">
-            5개 주관식 문항을 다시 풀고 맞춤 시작 레벨을 재배정받을 수 있습니다.
-          </p>
-        </div>
-
-        <button
-          onClick={() => {
-            sounds.playKey();
-            onOpenTest();
-          }}
-          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition shrink-0 ml-3"
-        >
-          테스트 응시
-        </button>
-      </div>
-
-      {/* 5-B. App Installation & Home Screen Icon */}
-      {onOpenInstallModal && (
-        <div className="bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 rounded-3xl border border-sky-200 p-5 shadow-xs mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5">
-            <img
-              src="/icon-192.png"
-              alt="앱 아이콘"
-              className="w-14 h-14 rounded-2xl shadow-md border border-white shrink-0 object-cover"
-            />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-black text-slate-900">홈 화면에 낱말퍼즐 앱 설치</span>
-                <span className="text-[10px] font-black px-2 py-0.5 bg-[#0288d1] text-white rounded-full">PWA</span>
-              </div>
-              <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                스마트폰 및 PC 홈 화면에 전용 앱 아이콘을 추가하여 언제든 바로 실행하세요.
-              </p>
-            </div>
+        {/* 3-Step Font Size Selector */}
+        <div className="py-2 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span className="text-sm font-bold text-slate-800 block">글씨 크기 조절</span>
+            <span className="text-[11px] text-slate-500">
+              퍼즐 판과 힌트 글자의 가독성을 키울 수 있습니다.
+            </span>
           </div>
 
-          <button
-            onClick={() => {
-              sounds.playKey();
-              onOpenInstallModal();
-            }}
-            className="w-full sm:w-auto px-4 py-2.5 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-xl shadow-xs transition shrink-0 cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>앱 설치</span>
-          </button>
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+            {(
+              [
+                { id: 'normal', label: '보통 (100%)' },
+                { id: 'large', label: '크게 (115%)' },
+                { id: 'huge', label: '아주 크게 (130%)' },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => {
+                  sounds.playKey();
+                  onChangeFontSize(opt.id);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  fontSize === opt.id
+                    ? 'bg-white text-[#0288d1] shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
 
-      {/* 6. Game Preferences & Accessibility */}
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm mb-4">
-        <h3 className="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
-          <span>게임 환경 및 시각 편의 설정</span>
-        </h3>
-
-        {/* Large Font Mode Toggle (Resolves Feedback #3: Seniors / Mobile Screen Font Size) */}
-        <div className="flex items-center justify-between py-2 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <Type className="w-5 h-5 text-indigo-600" />
+        {/* High Contrast Mode */}
+        {onToggleHighContrast && (
+          <div className="py-2 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <span className="text-sm font-bold text-slate-800 block">큰 글씨 모드 (시니어 / 시각 편의)</span>
+              <span className="text-sm font-bold text-slate-800 block">고대비 색상 모드</span>
               <span className="text-[11px] text-slate-500">
-                {isLargeFont ? '퍼즐 칸 및 설명 글씨가 크게 확대되어 있습니다.' : '표준 글씨 크기가 적용되어 있습니다.'}
+                격자 테두리와 글자의 명도 대비를 극대화합니다.
               </span>
             </div>
+            <button
+              onClick={() => {
+                sounds.playKey();
+                onToggleHighContrast();
+              }}
+              className={`px-4 py-1.5 rounded-full text-xs font-black transition ${
+                highContrast
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+              }`}
+            >
+              {highContrast ? '고대비 ON' : '고대비 OFF'}
+            </button>
           </div>
+        )}
 
-          <button
-            onClick={() => {
-              sounds.playKey();
-              onToggleLargeFont();
-            }}
-            className={`px-4 py-1.5 rounded-full text-xs font-black transition ${
-              isLargeFont
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-            }`}
-          >
-            {isLargeFont ? '큰 글씨 ON' : '큰 글씨 OFF'}
-          </button>
-        </div>
-
-        {/* Sound Toggle */}
-        <div className="flex items-center justify-between py-2 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
+        {/* Sound Effects Toggle */}
+        <div className="py-2 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             {isMuted ? (
               <VolumeX className="w-5 h-5 text-slate-400" />
             ) : (
@@ -483,11 +428,10 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
             <div>
               <span className="text-sm font-bold text-slate-800 block">효과음 사운드</span>
               <span className="text-[11px] text-slate-500">
-                {isMuted ? '음소거 상태입니다.' : '정답·클리어 효과음이 켜져 있습니다.'}
+                {isMuted ? '음소거 상태입니다.' : '정답 및 조작 효과음이 켜져 있습니다.'}
               </span>
             </div>
           </div>
-
           <button
             onClick={onToggleSound}
             className={`px-4 py-1.5 rounded-full text-xs font-black transition ${
@@ -501,7 +445,7 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
         </div>
 
         {/* Theme Palette Selection */}
-        <div className="py-3">
+        <div className="py-2">
           <div className="flex items-center gap-2 mb-2">
             <Palette className="w-4 h-4 text-slate-500" />
             <span className="text-sm font-bold text-slate-800">퍼즐 컬러 테마</span>
@@ -534,8 +478,88 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
         </div>
       </div>
 
+      {/* 5. Data Backup & Restore Feature */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm mb-4">
+        <h3 className="text-base font-black text-slate-800 mb-2 flex items-center gap-2">
+          <Download className="w-4 h-4 text-[#0288d1]" />
+          <span>데이터 안전 백업 및 복원</span>
+        </h3>
+        <p className="text-xs text-slate-500 mb-4">
+          기기를 변경하거나 브라우저 캐시 삭제 시에도 안심하세요! 게임 진행도와 인증서를 파일로 저장하고 언제든 복원할 수 있습니다.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <button
+            onClick={handleExportBackup}
+            className="py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-black shadow-xs transition flex items-center justify-center gap-2"
+          >
+            <Download className="w-4 h-4 text-sky-300" />
+            <span>내 기록 백업 파일 저장 (JSON)</span>
+          </button>
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-black shadow-2xs transition flex items-center justify-center gap-2"
+          >
+            <Upload className="w-4 h-4 text-[#0288d1]" />
+            <span>백업 파일 불러오기 및 복원</span>
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </div>
+      </div>
+
+      {/* 6. Diagnostic Placement Test & PWA App Install */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <div className="bg-white/95 rounded-2xl border border-slate-200 p-4 shadow-xs flex items-center justify-between">
+          <div>
+            <h4 className="text-xs font-black text-slate-800 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>실력 진단 주관식 테스트</span>
+            </h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">시작 레벨 재배정</p>
+          </div>
+          <button
+            onClick={() => {
+              sounds.playKey();
+              onOpenTest();
+            }}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition"
+          >
+            응시
+          </button>
+        </div>
+
+        {onOpenInstallModal && (
+          <div className="bg-white/95 rounded-2xl border border-sky-200 p-4 shadow-xs flex items-center justify-between">
+            <div>
+              <h4 className="text-xs font-black text-slate-800 flex items-center gap-1">
+                <Download className="w-3.5 h-3.5 text-[#0288d1]" />
+                <span>홈 화면에 앱 설치 (PWA)</span>
+              </h4>
+              <p className="text-[11px] text-slate-500 mt-0.5">오프라인 실행 지원</p>
+            </div>
+            <button
+              onClick={() => {
+                sounds.playKey();
+                onOpenInstallModal();
+              }}
+              className="px-3 py-1.5 bg-[#0288d1] hover:bg-[#0277bd] text-white font-bold text-xs rounded-xl shadow-2xs transition"
+            >
+              설치
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* 7. Legal Policies & Service Information (Google AdSense Compliance) */}
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3 mb-4">
         <div className="flex items-center gap-2 mb-1">
           <Shield className="w-4 h-4 text-[#0288d1]" />
           <h3 className="text-sm font-black text-slate-800">서비스 정책 및 이용 안내</h3>
@@ -560,10 +584,10 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
             className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-left transition flex items-center justify-between cursor-pointer"
           >
             <div>
-              <div className="text-xs font-black text-slate-800">서비스 이용약관</div>
-              <div className="text-[10px] text-slate-400">이용 권리 및 책임 안내</div>
+              <div className="text-xs font-black text-slate-800">이용약관</div>
+              <div className="text-[10px] text-slate-400">서비스 이용 규정 및 권리 의무</div>
             </div>
-            <FileText className="w-4 h-4 text-slate-500 shrink-0" />
+            <FileText className="w-4 h-4 text-emerald-500 shrink-0" />
           </button>
 
           <button
@@ -572,10 +596,10 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
             className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-left transition flex items-center justify-between cursor-pointer"
           >
             <div>
-              <div className="text-xs font-black text-slate-800">서비스 및 팀 소개</div>
-              <div className="text-[10px] text-slate-400">8대 지식 영역 교육 비전</div>
+              <div className="text-xs font-black text-slate-800">서비스 소개</div>
+              <div className="text-[10px] text-slate-400">8대 지식 영역 및 교육적 지향점</div>
             </div>
-            <Info className="w-4 h-4 text-emerald-500 shrink-0" />
+            <Info className="w-4 h-4 text-purple-500 shrink-0" />
           </button>
 
           <button
@@ -584,33 +608,25 @@ export const MyPageView: React.FC<MyPageViewProps> = ({
             className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-left transition flex items-center justify-between cursor-pointer"
           >
             <div>
-              <div className="text-xs font-black text-slate-800">문의 및 피드백</div>
-              <div className="text-[10px] text-slate-400">오류 제보 및 제휴 문의</div>
+              <div className="text-xs font-black text-slate-800">문의하기</div>
+              <div className="text-[10px] text-slate-400">honglabai@gmail.com 및 제휴 문의</div>
             </div>
-            <Mail className="w-4 h-4 text-indigo-500 shrink-0" />
+            <Mail className="w-4 h-4 text-amber-500 shrink-0" />
           </button>
         </div>
       </div>
 
-      {/* 8. Danger Zone: Reset Progress */}
-      <div className="bg-rose-50/80 rounded-2xl border border-rose-200 p-4 flex items-center justify-between">
+      {/* 8. Reset Game Data */}
+      <div className="bg-red-50/50 rounded-2xl border border-red-200 p-4 flex items-center justify-between">
         <div>
-          <span className="text-xs font-black text-rose-800 block">진행 데이터 초기화</span>
-          <span className="text-[11px] text-rose-600">
-            모든 관문 기록과 클리어 판 수를 처음(Lv.1)으로 되돌립니다.
-          </span>
+          <span className="text-xs font-black text-red-800 block">데이터 초기화</span>
+          <span className="text-[11px] text-red-600">진행도 및 풀이 기록을 처음 상태로 되돌립니다.</span>
         </div>
-
         <button
-          onClick={() => {
-            if (window.confirm('정말로 모든 진행 기록을 초기화하시겠습니까? 돌파한 관문과 기록이 삭제됩니다.')) {
-              onResetProgress();
-            }
-          }}
-          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition shrink-0 ml-3 flex items-center gap-1"
+          onClick={onResetProgress}
+          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-2xs transition"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>초기화</span>
+          초기화
         </button>
       </div>
     </div>

@@ -12,6 +12,19 @@ interface CandidatePlacement {
 }
 
 /**
+ * Seedable Mulberry32 pseudo-random number generator
+ */
+export function createMulberry32(seed: number) {
+  let s = Math.floor(seed) >>> 0;
+  return function () {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
  * Returns target word count for a given level:
  * - 초급 (Lv.1 ~ 3): 10개
  * - 중급 (Lv.4 ~ 7): 15개
@@ -25,7 +38,7 @@ export function getWordCountForLevel(level: number): number {
 
 /**
  * Returns grid size for a given level:
- * - 초급 (Lv.1 ~ 3): 8x8 (가로·세로 1칸 축소로 글자 및 터치 가독성 극대화)
+ * - 초급 (Lv.1 ~ 3): 8x8
  * - 중급 (Lv.4 ~ 7): 10x10
  * - 전문가 (Lv.8 ~ 10): 12x12
  */
@@ -58,6 +71,39 @@ export function createEmptyGrid(size: number = 9): CellData[][] {
 }
 
 /**
+ * Builds 2D CellData grid deterministically from size and placedWords
+ */
+export function buildBoardGrid(size: number, placedWords: PlacedWord[]): CellData[][] {
+  const grid = createEmptyGrid(size);
+
+  for (const pw of placedWords) {
+    for (let i = 0; i < pw.length; i++) {
+      const r = pw.direction === 'across' ? pw.startRow : pw.startRow + i;
+      const c = pw.direction === 'across' ? pw.startCol + i : pw.startCol;
+      if (r < 0 || r >= size || c < 0 || c >= size) continue;
+
+      const cell = grid[r][c];
+      cell.isActive = true;
+      cell.solutionChar = pw.term[i] || '';
+      cell.chosungChar = getChosung(pw.term[i] || '');
+
+      if (!cell.wordIds.includes(pw.id)) {
+        cell.wordIds.push(pw.id);
+      }
+
+      if (i === 0) {
+        if (!cell.startNumber) {
+          cell.startNumber = pw.number;
+          cell.startNumberText = pw.clueNumberText;
+        }
+      }
+    }
+  }
+
+  return grid;
+}
+
+/**
  * Validates whether placing `word` at `(startRow, startCol)` along `direction` is legal
  */
 export function canPlaceWord(
@@ -75,7 +121,6 @@ export function canPlaceWord(
   // Check boundaries
   if (direction === 'across') {
     if (startRow < 0 || startRow >= size || startCol < 0 || startCol + len > size) return false;
-    // Check cell before start and cell after end (must be empty)
     if (startCol - 1 >= 0 && grid[startRow][startCol - 1] !== null) return false;
     if (startCol + len < size && grid[startRow][startCol + len] !== null) return false;
   } else {
@@ -96,7 +141,6 @@ export function canPlaceWord(
       }
       hasIntersection = true;
     } else {
-      // If cell is empty, check neighboring cells perpendicular to this word direction
       if (direction === 'across') {
         if (r - 1 >= 0 && grid[r - 1][c] !== null) return false;
         if (r + 1 < size && grid[r + 1][c] !== null) return false;
@@ -111,8 +155,8 @@ export function canPlaceWord(
 }
 
 /**
- * Automatically generates a crossword board from a given word pool.
- * Uses level-scaled word counts (10, 15, or 20) and grid sizes (9, 11, or 13).
+ * Dynamically generates a valid, connected crossword board
+ * Supports deterministic generation via seed parameter
  */
 export function generateCrosswordBoard(
   pool: WordItem[],
@@ -120,7 +164,8 @@ export function generateCrosswordBoard(
   boardNumber: number = 1,
   gridSize?: number,
   targetCount?: number,
-  category?: CategoryId
+  category?: CategoryId,
+  seed?: number
 ): BoardData | null {
   const catId = category || pool[0]?.category || 'POLITICS';
   const catMeta = getCategoryMeta(catId);
@@ -128,14 +173,23 @@ export function generateCrosswordBoard(
   const finalTargetCount = targetCount ?? getWordCountForLevel(level);
   const finalGridSize = gridSize ?? getGridSizeForLevel(level);
 
-  const levelWords = pool.filter(w => w.level === level);
-  const otherWords = pool.filter(w => w.level !== level);
-  const prioritizedPool = [...levelWords, ...otherWords];
+  // Random generator (either PRNG with seed or Math.random)
+  const randomFn = typeof seed === 'number' ? createMulberry32(seed) : Math.random;
+
+  // Filter and weight words by level difficulty
+  const targetLevelWords = pool.filter((w) => w.level === level);
+  const adjacentWords = pool.filter((w) => Math.abs(w.level - level) === 1);
+  const remoteWords = pool.filter((w) => Math.abs(w.level - level) > 1);
+
+  // If level <= 3, exclude words from level >= 8
+  const validRemote = level <= 3 ? remoteWords.filter((w) => w.level <= 7) : remoteWords;
+  const prioritizedPool = [...targetLevelWords, ...adjacentWords, ...validRemote];
 
   const attempts = 80;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
-    const shuffled = [...prioritizedPool].sort(() => Math.random() - 0.5);
+    // Deterministic shuffle with randomFn
+    const shuffled = [...prioritizedPool].sort(() => randomFn() - 0.5);
     const charGrid: (string | null)[][] = Array.from({ length: finalGridSize }, () =>
       Array.from({ length: finalGridSize }, () => null)
     );
@@ -149,12 +203,15 @@ export function generateCrosswordBoard(
 
     // Pick a well-proportioned first word (length 3 to finalGridSize - 2)
     const firstCandidates = prioritizedPool.filter(
-      w => w.term.length >= 3 && w.term.length <= finalGridSize - 2
+      (w) => w.term.length >= 3 && w.term.length <= finalGridSize - 2
     );
-    const firstWord = firstCandidates[Math.floor(Math.random() * firstCandidates.length)] || shuffled[0];
+    const firstWord =
+      firstCandidates.length > 0
+        ? firstCandidates[Math.floor(randomFn() * firstCandidates.length)]
+        : shuffled[0];
     if (!firstWord) continue;
 
-    const firstDir: Direction = Math.random() > 0.5 ? 'across' : 'down';
+    const firstDir: Direction = randomFn() > 0.5 ? 'across' : 'down';
     const firstLen = firstWord.term.length;
     const centerRow = Math.floor((finalGridSize - (firstDir === 'down' ? firstLen : 1)) / 2);
     const centerCol = Math.floor((finalGridSize - (firstDir === 'across' ? firstLen : 1)) / 2);
@@ -178,7 +235,7 @@ export function generateCrosswordBoard(
 
     const usedIds = new Set<string>([firstWord.id]);
 
-    // Try to add more intersecting words
+    // Try to add intersecting words
     let iterations = 0;
     while (placedList.length < finalTargetCount && iterations < 600) {
       iterations++;
@@ -220,13 +277,14 @@ export function generateCrosswordBoard(
         break;
       }
 
-      // Pick one randomly from candidates
-      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      // Pick random valid placement
+      const chosen = candidates[Math.floor(randomFn() * candidates.length)];
       for (let i = 0; i < chosen.word.term.length; i++) {
         const r = chosen.direction === 'across' ? chosen.startRow : chosen.startRow + i;
         const c = chosen.direction === 'across' ? chosen.startCol + i : chosen.startCol;
         charGrid[r][c] = chosen.word.term[i];
       }
+
       placedList.push({
         word: chosen.word,
         direction: chosen.direction,
@@ -243,9 +301,20 @@ export function generateCrosswordBoard(
         return a.startCol - b.startCol;
       });
 
-      // Assign numbers 1 to N
-      const finalPlacedWords: PlacedWord[] = placedList.slice(0, finalTargetCount).map((item, idx) => {
-        const num = idx + 1;
+      // Number assignment: if across and down start at the exact same cell, share the same number!
+      const startCellToNum = new Map<string, number>();
+      let nextNumber = 1;
+
+      const finalPlacedWords: PlacedWord[] = placedList.slice(0, finalTargetCount).map((item) => {
+        const cellKey = `${item.startRow},${item.startCol}`;
+        let num: number;
+        if (startCellToNum.has(cellKey)) {
+          num = startCellToNum.get(cellKey)!;
+        } else {
+          num = nextNumber++;
+          startCellToNum.set(cellKey, num);
+        }
+
         return {
           id: item.word.id,
           number: num,
@@ -259,30 +328,12 @@ export function generateCrosswordBoard(
         };
       });
 
-      // Construct final grid
-      const finalGrid = createEmptyGrid(finalGridSize);
-      for (const pw of finalPlacedWords) {
-        for (let i = 0; i < pw.length; i++) {
-          const r = pw.direction === 'across' ? pw.startRow : pw.startRow + i;
-          const c = pw.direction === 'across' ? pw.startCol + i : pw.startCol;
-          const cell = finalGrid[r][c];
-          cell.isActive = true;
-          cell.solutionChar = pw.term[i];
-          cell.chosungChar = getChosung(pw.term[i]);
-          if (!cell.wordIds.includes(pw.id)) {
-            cell.wordIds.push(pw.id);
-          }
-          if (i === 0) {
-            cell.startNumber = pw.number;
-            cell.startNumberText = pw.clueNumberText;
-          }
-        }
-      }
-
+      // Construct final grid using buildBoardGrid
+      const finalGrid = buildBoardGrid(finalGridSize, finalPlacedWords);
       const tierTitle = level <= 3 ? '초급 (10단어)' : level <= 7 ? '중급 (15단어)' : '전문가 (20단어)';
 
       return {
-        id: `board_${catId.toLowerCase()}_lv${level}_p${boardNumber}_${Date.now()}`,
+        id: `board_${catId.toLowerCase()}_lv${level}_p${boardNumber}_${typeof seed === 'number' ? seed : Date.now()}`,
         category: catId,
         level,
         boardNumber,

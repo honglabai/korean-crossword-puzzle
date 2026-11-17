@@ -129,6 +129,14 @@ class SoundFX {
       // Ignore
     }
   }
+
+  playLevelUp() {
+    this.playVictory();
+  }
+
+  playIncorrect() {
+    this.playError();
+  }
 }
 
 export const sounds = new SoundFX();

@@ -5,7 +5,7 @@ import { getCategoryMeta } from './data/categoryRegistry';
 import { getBoardForCategoryAndLevel, generateFreshBoard } from './data/boardProvider';
 import { getRandomBackgroundForLevel, BackgroundItem } from './utils/backgroundManager';
 import { sounds } from './utils/audio';
-import { combineHangulInput, isCompleteSyllable, decompose, compose } from './utils/hangul';
+import { combineHangulInput, decompose, compose } from './utils/hangul';
 import { WorkbookHeader } from './components/WorkbookHeader';
 import { CategoryLevelBar } from './components/CategoryLevelBar';
 import { CategorySelectorModal } from './components/CategorySelectorModal';
@@ -21,297 +21,130 @@ import { LevelUpModal } from './components/LevelUpModal';
 import { MasterCertificate } from './components/MasterCertificate';
 import { BottomNavBar, TabType } from './components/BottomNavBar';
 import { RecordsView } from './components/RecordsView';
-import { WordbookView } from './components/WordbookView';
 import { MyPageView } from './components/MyPageView';
 import { LegalPolicyModal, PolicyTab } from './components/LegalPolicyModal';
 import { SiteFooter } from './components/SiteFooter';
 import { AdBannerSlot } from './components/AdBannerSlot';
-import { KnowledgeArticleHub } from './components/KnowledgeArticleHub';
 import { PuzzleStageKnowledgeGuide } from './components/PuzzleStageKnowledgeGuide';
 import { InstallAppModal } from './components/InstallAppModal';
 import { usePWAInstall } from './utils/usePWAInstall';
+import { HomeScreen } from './features/home/HomeScreen';
+import { KnowledgeHubView } from './features/learning/KnowledgeHubView';
+import { DailyChallengeModal } from './features/daily/DailyChallengeModal';
+import { AchievementsModal } from './features/achievements/AchievementsModal';
+import {
+  loadUserSaveData,
+  saveUserSaveData,
+  processDailyAttendance,
+  saveActiveGame,
+  clearActiveGame,
+  recordWordMistake,
+  recordWordHintUsed,
+  isCategoryMasterEligible,
+  getKSTDateString,
+  ALL_CATEGORIES,
+} from './services/storageService';
+import { getDailyBoard } from './services/dailyService';
+import { UserSaveData, FontSizeSetting, ActiveGameSession } from './types/progress';
 import confetti from 'canvas-confetti';
 
-const STORAGE_KEY = 'politics_crossword_progress_v5';
-
-// SEO & Deep Linking: Resolve category from query param e.g. ?category=politics or hash e.g. #knowledge/politics
 const getInitialCategory = (): CategoryId => {
   if (typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);
     const cat = params.get('category')?.toUpperCase();
-    const VALID: CategoryId[] = [
-      'POLITICS',
-      'SOCIETY',
-      'CULTURE',
-      'SPORTS',
-      'KOREAN_HISTORY',
-      'WORLD_HISTORY',
-      'MUSIC',
-      'ART',
-    ];
     if (cat) {
       const normalized = cat.replace('-', '_');
-      const found = VALID.find(
+      const found = ALL_CATEGORIES.find(
         (c) => c === normalized || c.replace('_', '') === normalized.replace('_', '')
       );
       if (found) return found;
     }
     const hash = window.location.hash.toLowerCase();
-    for (const c of VALID) {
+    for (const c of ALL_CATEGORIES) {
       if (hash.includes(c.toLowerCase().replace('_', '')) || hash.includes(c.toLowerCase())) {
         return c;
       }
     }
   }
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && JSON.parse(saved).selectedCategory) {
-      return JSON.parse(saved).selectedCategory;
+    const loaded = loadUserSaveData();
+    if (loaded && loaded.selectedCategory) {
+      return loaded.selectedCategory;
     }
   } catch {}
   return 'POLITICS';
 };
 
-// SEO & Deep Linking: Resolve active tab from query param e.g. ?tab=knowledge or hash
 const getInitialTab = (): TabType => {
   if (typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab')?.toUpperCase();
-    const VALID_TABS: TabType[] = ['CHALLENGE', 'KNOWLEDGE', 'WORDBOOK', 'RECORDS', 'MYPAGE'];
+    const VALID_TABS: TabType[] = ['HOME', 'CHALLENGE', 'KNOWLEDGE', 'RECORDS', 'SETTINGS'];
     if (tabParam && VALID_TABS.includes(tabParam as TabType)) {
       return tabParam as TabType;
     }
+    if (tabParam === 'MYPAGE') return 'SETTINGS';
+    if (tabParam === 'WORDBOOK') return 'KNOWLEDGE';
+
     const hash = window.location.hash.toLowerCase();
-    if (hash.includes('knowledge')) return 'KNOWLEDGE';
-    if (hash.includes('wordbook')) return 'WORDBOOK';
+    if (hash.includes('knowledge') || hash.includes('wordbook')) return 'KNOWLEDGE';
     if (hash.includes('record')) return 'RECORDS';
-    if (hash.includes('mypage') || hash.includes('setting')) return 'MYPAGE';
+    if (hash.includes('mypage') || hash.includes('setting')) return 'SETTINGS';
+    if (hash.includes('challenge') || hash.includes('play')) return 'CHALLENGE';
   }
-  return 'CHALLENGE';
+  return 'HOME';
 };
 
 export function App() {
-  // Selected Knowledge Category (정치, 사회, 문화, 스포츠, 한국사, 세계사, 음악, 미술)
-  const [selectedCategory, setSelectedCategory] = useState<CategoryId>(getInitialCategory);
-
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
-
-  // --- Persistent User Progress State ---
-  const [currentLevel, setCurrentLevel] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const maxLvl = parsed.maxUnlockedLevel || 1;
-        const curLvl = parsed.currentLevel || 1;
-        return Math.min(curLvl, Math.max(1, maxLvl));
-      }
-    } catch {}
-    return 1;
+  // Persistent User Save Data State
+  const [saveData, setSaveData] = useState<UserSaveData>(() => {
+    const loaded = loadUserSaveData();
+    const initCat = getInitialCategory();
+    if (initCat && initCat !== loaded.selectedCategory) {
+      loaded.selectedCategory = initCat;
+    }
+    const { data: updated } = processDailyAttendance(loaded);
+    return updated;
   });
 
-  const [clearCountInLevel, setClearCountInLevel] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved).clearCountInLevel || 0;
-    } catch {}
-    return 0;
-  });
-
-  const [levelClears, setLevelClears] = useState<Record<number, number>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved).levelClears || {};
-    } catch {}
-    return {};
-  });
-
-  const [isTested, setIsTested] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved).isTested || false;
-    } catch {}
-    return false;
-  });
-
-  // Hint Balance: starts at 3, replenished via rewarded ad
-  const [hintBalance, setHintBalance] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && typeof JSON.parse(saved).hintBalance === 'number') {
-        return JSON.parse(saved).hintBalance;
-      }
-    } catch {}
-    return 3;
-  });
-
-  // Maximum unlocked level (Level gating progression: can only proceed by breaking through 3-board gates)
-  const [maxUnlockedLevel, setMaxUnlockedLevel] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.maxUnlockedLevel) return parsed.maxUnlockedLevel;
-        let maxLvl = parsed.currentLevel || 1;
-        if (parsed.levelClears) {
-          for (let l = 1; l <= 10; l++) {
-            if ((parsed.levelClears[l] || 0) >= 3) {
-              maxLvl = Math.max(maxLvl, l + 1);
-            }
-          }
-        }
-        return Math.min(10, maxLvl);
-      }
-    } catch {}
-    return 1;
-  });
-
-  // Google AdSense & Legal Policy Modal
-  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState<boolean>(false);
-  const [policyModalTab, setPolicyModalTab] = useState<PolicyTab>('PRIVACY');
-  const handleOpenPolicy = (tab: PolicyTab = 'PRIVACY') => {
-    setPolicyModalTab(tab);
-    setIsPolicyModalOpen(true);
+  const selectedCategory = saveData.selectedCategory;
+  const currentCatProgress = saveData.categoryProgress[selectedCategory] || {
+    currentLevel: 1,
+    clearCountInLevel: 0,
+    levelClears: {},
+    maxUnlockedLevel: 1,
+    isTested: false,
+    totalClearedBoards: 0,
   };
 
-  // Lock notification toast
-  const [lockAlertToast, setLockAlertToast] = useState<string | null>(null);
+  const currentLevel = currentCatProgress.currentLevel;
+  const clearCountInLevel = currentCatProgress.clearCountInLevel;
+  const levelClears = currentCatProgress.levelClears;
+  const maxUnlockedLevel = currentCatProgress.maxUnlockedLevel;
+  const hintBalance = saveData.hintBalance;
+  const boardRecords = saveData.records;
+  const solvedWordTerms = useMemo(() => new Set(saveData.solvedWordTerms), [saveData.solvedWordTerms]);
 
-  // Daily attendance free hint toast (Resolves user pain point #1: Generous hint economy)
-  const [attendanceToast, setAttendanceToast] = useState<string | null>(null);
-
-  // Accessibility large font mode (Resolves user pain point #3: Small text for seniors/mobile)
-  const [isLargeFont, setIsLargeFont] = useState<boolean>(() => {
-    return localStorage.getItem('politics_crossword_large_font') === 'true';
-  });
-
-  const handleToggleLargeFont = () => {
-    setIsLargeFont((prev) => {
-      const next = !prev;
-      localStorage.setItem('politics_crossword_large_font', String(next));
-      return next;
-    });
-  };
-
-  // Daily attendance bonus check on launch (+3 free hints daily)
-  useEffect(() => {
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const lastAttendance = localStorage.getItem('politics_crossword_last_attendance');
-      if (lastAttendance !== today) {
-        localStorage.setItem('politics_crossword_last_attendance', today);
-        setHintBalance((prev) => {
-          const newBal = prev + 3;
-          setAttendanceToast(`🎉 매일 출석 보너스! 무료 힌트 +3개가 충전되었습니다. (보유: ${newBal}개)`);
-          return newBal;
-        });
-        setTimeout(() => setAttendanceToast(null), 6000);
-      }
-    } catch {}
-  }, []);
-
-  // Data restore synchronization
-  const handleDataRestored = () => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.selectedCategory) setSelectedCategory(parsed.selectedCategory);
-        if (parsed.currentLevel) setCurrentLevel(parsed.currentLevel);
-        if (typeof parsed.clearCountInLevel === 'number') setClearCountInLevel(parsed.clearCountInLevel);
-        if (parsed.levelClears) setLevelClears(parsed.levelClears);
-        if (typeof parsed.hintBalance === 'number') setHintBalance(parsed.hintBalance);
-        if (parsed.maxUnlockedLevel) setMaxUnlockedLevel(parsed.maxUnlockedLevel);
-        if (parsed.boardRecords) setBoardRecords(parsed.boardRecords);
-        if (parsed.solvedWords) setSolvedWordTerms(new Set(parsed.solvedWords));
-        if (typeof parsed.isTested === 'boolean') setIsTested(parsed.isTested);
-        if (parsed.selectedCategory && parsed.currentLevel) {
-          loadBoard(parsed.currentLevel, (parsed.clearCountInLevel || 0) + 1, parsed.selectedCategory);
-        }
-      }
-      const lf = localStorage.getItem('politics_crossword_large_font') === 'true';
-      setIsLargeFont(lf);
-    } catch {}
-  };
-
-  const [userThemeId, setUserThemeId] = useState<ThemeId | null>(null);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-
-  // Active random themed background for the current level (1 of 3)
-  const [activeBackground, setActiveBackground] = useState<BackgroundItem>(() =>
-    getRandomBackgroundForLevel(currentLevel)
-  );
-
-  // Active theme: user selected or default for current level tier
-  const activeThemeId: ThemeId = userThemeId || getDefaultThemeForLevel(currentLevel);
-  const currentTheme = THEMES[activeThemeId] || THEMES.emerald;
-
-  // --- Active Board & Game State ---
-  const currentBoardNumber = Math.min(3, clearCountInLevel + 1);
-  const [board, setBoard] = useState<BoardData>(() =>
-    getBoardForCategoryAndLevel(selectedCategory, currentLevel, currentBoardNumber)
-  );
-
-  const [userGrid, setUserGrid] = useState<string[][]>(() =>
-    Array.from({ length: board.size || 9 }, () => Array(board.size || 9).fill(''))
-  );
-
-  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
-  const [activeDirection, setActiveDirection] = useState<Direction>('across');
-  const [activeWordId, setActiveWordId] = useState<string | null>(null);
-
-  const [wrongCells, setWrongCells] = useState<Set<string>>(new Set());
-  const [revealedChosungs, setRevealedChosungs] = useState<Set<string>>(new Set());
-
-  // Bottom Navigation Active Tab ('CHALLENGE' | 'KNOWLEDGE' | 'WORDBOOK' | 'RECORDS' | 'MYPAGE')
+  // Active Tab
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
 
-  // SEO & Deep Linking: Synchronize URL query parameters without reloading
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set('category', selectedCategory.toLowerCase());
-      if (activeTab === 'CHALLENGE') {
-        url.searchParams.delete('tab');
-      } else {
-        url.searchParams.set('tab', activeTab.toLowerCase());
-      }
-      window.history.replaceState(null, '', url.pathname + url.search);
-    } catch {}
-  }, [selectedCategory, activeTab]);
+  // Daily puzzle mode flag
+  const [isDailyChallengeActive, setIsDailyChallengeActive] = useState<boolean>(false);
 
-  // Game Stopwatch / Timer State
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(true);
-
-  // Cleared Board Records History
-  const [boardRecords, setBoardRecords] = useState<BoardRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved).boardRecords || [];
-    } catch {}
-    return [];
-  });
-
-  // Solved Word Terms across all played boards
-  const [solvedWordTerms, setSolvedWordTerms] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && JSON.parse(saved).solvedWords) {
-        return new Set(JSON.parse(saved).solvedWords);
-      }
-    } catch {}
-    return new Set<string>();
-  });
-
-  // Modals - Do NOT auto-open on initial page load (prevents AdSense alert screen violation)
+  // Modals state
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
   const [isPlacementTestOpen, setIsPlacementTestOpen] = useState<boolean>(false);
   const [isChosungModalOpen, setIsChosungModalOpen] = useState<boolean>(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState<boolean>(false);
+  const [isDailyModalOpen, setIsDailyModalOpen] = useState<boolean>(false);
+  const [isAchievementsModalOpen, setIsAchievementsModalOpen] = useState<boolean>(false);
+  const [isCertificateOpen, setIsCertificateOpen] = useState<boolean>(false);
+  const [certificateCategory, setCertificateCategory] = useState<CategoryId>(selectedCategory);
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState<boolean>(false);
+  const [policyModalTab, setPolicyModalTab] = useState<PolicyTab>('PRIVACY');
   const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
-  const pwa = usePWAInstall();
 
+  // Clear completion modal
   const [levelUpModal, setLevelUpModal] = useState<{
     isOpen: boolean;
     type: 'board_cleared' | 'level_cleared' | 'master_cleared';
@@ -322,46 +155,138 @@ export function App() {
     type: 'board_cleared',
     clearedBoardNumber: 1,
   });
-  const [isCertificateOpen, setIsCertificateOpen] = useState<boolean>(false);
 
-  // Save progress to localStorage
+  const currentBoardNumber = Math.min(3, (clearCountInLevel % 3) + 1);
+
+  // Active Crossword Board
+  const [board, setBoard] = useState<BoardData>(() => {
+    const activeSession = saveData.activeGames[selectedCategory];
+    if (activeSession && activeSession.level && activeSession.boardNumber) {
+      return getBoardForCategoryAndLevel(selectedCategory, activeSession.level, activeSession.boardNumber);
+    }
+    return getBoardForCategoryAndLevel(selectedCategory, currentLevel, currentBoardNumber);
+  });
+
+  // User input grid
+  const [userGrid, setUserGrid] = useState<string[][]>(() => {
+    const activeSession = saveData.activeGames[selectedCategory];
+    if (activeSession && activeSession.userGrid) {
+      return activeSession.userGrid;
+    }
+    return Array.from({ length: board.size || 8 }, () => Array(board.size || 8).fill(''));
+  });
+
+  // Cell selection & Direction
+  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(() => {
+    const activeSession = saveData.activeGames[selectedCategory];
+    if (activeSession && activeSession.selectedCell) {
+      return activeSession.selectedCell;
+    }
+    if (board.placedWords.length > 0) {
+      return { row: board.placedWords[0].startRow, col: board.placedWords[0].startCol };
+    }
+    return null;
+  });
+
+  const [activeDirection, setActiveDirection] = useState<Direction>(() => {
+    const activeSession = saveData.activeGames[selectedCategory];
+    return activeSession?.activeDirection || 'across';
+  });
+
+  const [activeWordId, setActiveWordId] = useState<string | null>(() => {
+    const activeSession = saveData.activeGames[selectedCategory];
+    return activeSession?.activeWordId || (board.placedWords.length > 0 ? board.placedWords[0].id : null);
+  });
+
+  const [wrongCells, setWrongCells] = useState<Set<string>>(new Set());
+  const [revealedChosungs, setRevealedChosungs] = useState<Set<string>>(() => {
+    const activeSession = saveData.activeGames[selectedCategory];
+    return new Set(activeSession?.revealedChosungs || []);
+  });
+
+  // Timer
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(() => {
+    const activeSession = saveData.activeGames[selectedCategory];
+    return activeSession?.elapsedSeconds || 0;
+  });
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+
+  // Theme & Background
+  const [userThemeId, setUserThemeId] = useState<ThemeId>(() => (saveData.settings.themeId as ThemeId) || 'classic-blue');
+  const levelTheme = useMemo(() => getDefaultThemeForLevel(currentLevel), [currentLevel]);
+  const currentTheme = THEMES[userThemeId] || levelTheme;
+
+  const [activeBackground, setActiveBackground] = useState<BackgroundItem | null>(() =>
+    getRandomBackgroundForLevel(currentLevel)
+  );
+
+  // Audio mute
+  const [isMuted, setIsMuted] = useState<boolean>(() => saveData.settings.isMuted);
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          selectedCategory,
-          currentLevel,
-          clearCountInLevel,
-          levelClears,
-          isTested,
-          hintBalance,
-          maxUnlockedLevel,
-          boardRecords,
-          solvedWords: Array.from(solvedWordTerms),
-        })
-      );
-    } catch {}
-  }, [
-    selectedCategory,
-    currentLevel,
-    clearCountInLevel,
-    levelClears,
-    isTested,
-    hintBalance,
-    maxUnlockedLevel,
-    boardRecords,
-    solvedWordTerms,
-  ]);
+    sounds.isMuted = isMuted;
+  }, [isMuted]);
 
-  // Live Timer: runs when playing in CHALLENGE tab and no modal is blocking
+  const pwa = usePWAInstall();
+
+  // Active word reference
+  const activeWord = useMemo(() => {
+    if (!activeWordId) return null;
+    return board.placedWords.find((w) => w.id === activeWordId) || null;
+  }, [board.placedWords, activeWordId]);
+
+  // Derived Completed Words
+  const completedWordIds = useMemo(() => {
+    const completed = new Set<string>();
+    for (const pw of board.placedWords) {
+      let isWordComplete = true;
+      for (let i = 0; i < pw.length; i++) {
+        const r = pw.direction === 'across' ? pw.startRow : pw.startRow + i;
+        const c = pw.direction === 'across' ? pw.startCol + i : pw.startCol;
+        if (!userGrid[r] || userGrid[r][c] !== pw.term[i]) {
+          isWordComplete = false;
+          break;
+        }
+      }
+      if (isWordComplete) {
+        completed.add(pw.id);
+      }
+    }
+    return completed;
+  }, [board.placedWords, userGrid]);
+
+  // Save active game session automatically
+  const persistActiveSession = useCallback(
+    (grid: string[][], chosungs: Set<string>, cell: { row: number; col: number } | null, wordId: string | null, dir: Direction) => {
+      if (isDailyChallengeActive) return;
+
+      const session: ActiveGameSession = {
+        category: selectedCategory,
+        level: board.level,
+        boardNumber: board.boardNumber,
+        userGrid: grid,
+        revealedChosungs: Array.from(chosungs),
+        elapsedSeconds,
+        selectedCell: cell,
+        activeWordId: wordId,
+        activeDirection: dir,
+        updatedAt: new Date().toISOString(),
+      };
+
+      saveActiveGame(session);
+    },
+    [isDailyChallengeActive, selectedCategory, board.level, board.boardNumber, elapsedSeconds]
+  );
+
+  // Timer Tick
   useEffect(() => {
     const isModalActive =
       isPlacementTestOpen ||
       isChosungModalOpen ||
       isAdModalOpen ||
       levelUpModal.isOpen ||
-      isCertificateOpen;
+      isCertificateOpen ||
+      isDailyModalOpen ||
+      isAchievementsModalOpen;
 
     if (activeTab !== 'CHALLENGE' || isModalActive) {
       setIsTimerRunning(false);
@@ -369,11 +294,11 @@ export function App() {
     }
 
     setIsTimerRunning(true);
-    const timerInterval = setInterval(() => {
+    const interval = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
 
-    return () => clearInterval(timerInterval);
+    return () => clearInterval(interval);
   }, [
     activeTab,
     isPlacementTestOpen,
@@ -381,124 +306,101 @@ export function App() {
     isAdModalOpen,
     levelUpModal.isOpen,
     isCertificateOpen,
+    isDailyModalOpen,
+    isAchievementsModalOpen,
   ]);
 
-  // Load appropriate board when category, level, or boardNumber changes
-  const loadBoard = useCallback((lvl: number, bNum: number, cat?: CategoryId) => {
-    const targetCat = cat || selectedCategory;
-    const newBoard = getBoardForCategoryAndLevel(targetCat, lvl, bNum);
-    setBoard(newBoard);
-    setUserGrid(Array.from({ length: newBoard.size || 9 }, () => Array(newBoard.size || 9).fill('')));
-    setWrongCells(new Set());
-    setRevealedChosungs(new Set());
-    setActiveBackground((prev) => getRandomBackgroundForLevel(lvl, prev?.id));
-    setElapsedSeconds(0); // Reset timer for fresh board run
+  // Load board
+  const loadBoard = useCallback(
+    (lvl: number, bNum: number, cat?: CategoryId) => {
+      const targetCat = cat || selectedCategory;
+      const newBoard = getBoardForCategoryAndLevel(targetCat, lvl, bNum);
+      setBoard(newBoard);
+      const emptyGrid = Array.from({ length: newBoard.size || 8 }, () => Array(newBoard.size || 8).fill(''));
+      setUserGrid(emptyGrid);
+      setWrongCells(new Set());
+      setRevealedChosungs(new Set());
+      setActiveBackground((prev) => getRandomBackgroundForLevel(lvl, prev?.id));
+      setElapsedSeconds(0);
+      setIsDailyChallengeActive(false);
 
-    // Pick first word as active
-    if (newBoard.placedWords.length > 0) {
-      const first = newBoard.placedWords[0];
-      setActiveWordId(first.id);
-      setActiveDirection(first.direction);
-      setSelectedCell({ row: first.startRow, col: first.startCol });
-    }
-  }, [selectedCategory]);
+      if (newBoard.placedWords.length > 0) {
+        const first = newBoard.placedWords[0];
+        setActiveWordId(first.id);
+        setActiveDirection(first.direction);
+        setSelectedCell({ row: first.startRow, col: first.startCol });
+      }
+    },
+    [selectedCategory]
+  );
 
-  // Switch category and load new puzzle
+  // Switch category
   const handleSelectCategory = (cat: CategoryId) => {
-    setSelectedCategory(cat);
-    loadBoard(currentLevel, currentBoardNumber, cat);
     sounds.playWordComplete();
+    const updated = { ...saveData, selectedCategory: cat };
+    setSaveData(updated);
+    saveUserSaveData(updated);
+
+    const targetProg = updated.categoryProgress[cat] || {
+      currentLevel: 1,
+      clearCountInLevel: 0,
+      levelClears: {},
+      maxUnlockedLevel: 1,
+      isTested: false,
+      totalClearedBoards: 0,
+    };
+
+    const activeSession = updated.activeGames[cat];
+    if (activeSession && activeSession.level && activeSession.boardNumber) {
+      const activeBoard = getBoardForCategoryAndLevel(cat, activeSession.level, activeSession.boardNumber);
+      setBoard(activeBoard);
+      setUserGrid(activeSession.userGrid || Array.from({ length: activeBoard.size }, () => Array(activeBoard.size).fill('')));
+      setRevealedChosungs(new Set(activeSession.revealedChosungs || []));
+      setElapsedSeconds(activeSession.elapsedSeconds || 0);
+      setSelectedCell(activeSession.selectedCell || (activeBoard.placedWords[0] ? { row: activeBoard.placedWords[0].startRow, col: activeBoard.placedWords[0].startCol } : null));
+      setActiveWordId(activeSession.activeWordId || activeBoard.placedWords[0]?.id || null);
+      setActiveDirection(activeSession.activeDirection || 'across');
+      setWrongCells(new Set());
+      setIsDailyChallengeActive(false);
+    } else {
+      const targetBoardNum = Math.min(3, (targetProg.clearCountInLevel % 3) + 1);
+      loadBoard(targetProg.currentLevel, targetBoardNum, cat);
+    }
   };
 
-  // Initialize board selection on mount
-  useEffect(() => {
-    if (board.placedWords.length > 0 && !selectedCell) {
-      const first = board.placedWords[0];
+  const handleResumeGame = (cat: CategoryId) => {
+    handleSelectCategory(cat);
+    setActiveTab('CHALLENGE');
+  };
+
+  const handleStartDailyChallenge = () => {
+    sounds.playVictory();
+    const todayKST = getKSTDateString();
+    const dailyBoard = getDailyBoard(todayKST);
+    setBoard(dailyBoard);
+    setUserGrid(Array.from({ length: dailyBoard.size }, () => Array(dailyBoard.size).fill('')));
+    setRevealedChosungs(new Set());
+    setWrongCells(new Set());
+    setElapsedSeconds(0);
+    setIsDailyChallengeActive(true);
+
+    if (dailyBoard.placedWords.length > 0) {
+      const first = dailyBoard.placedWords[0];
       setActiveWordId(first.id);
       setActiveDirection(first.direction);
       setSelectedCell({ row: first.startRow, col: first.startCol });
     }
-  }, [board, selectedCell]);
 
-  // Map of active word object
-  const activeWord = useMemo(() => {
-    if (!activeWordId) return board.placedWords[0] || null;
-    return board.placedWords.find((w) => w.id === activeWordId) || null;
-  }, [board.placedWords, activeWordId]);
+    setActiveTab('CHALLENGE');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  // Check if selected cell is an intersection of across & down words
-  const isIntersection = useMemo(() => {
-    if (!selectedCell) return false;
-    const { row, col } = selectedCell;
-    const count = board.placedWords.filter((pw) => {
-      if (pw.direction === 'across') {
-        return pw.startRow === row && col >= pw.startCol && col < pw.startCol + pw.length;
-      } else {
-        return pw.startCol === col && row >= pw.startRow && row < pw.startRow + pw.length;
-      }
-    }).length;
-    return count > 1;
-  }, [selectedCell, board.placedWords]);
-
-  // Check if active word has any intersection of across & down words
-  const hasWordIntersection = useMemo(() => {
-    if (!activeWord) return false;
-    const otherDir: Direction = activeWord.direction === 'across' ? 'down' : 'across';
-    for (let i = 0; i < activeWord.length; i++) {
-      const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
-      const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
-      const hasCross = board.placedWords.some((pw) => {
-        if (pw.direction !== otherDir) return false;
-        if (pw.direction === 'across') {
-          return pw.startRow === wr && wc >= pw.startCol && wc < pw.startCol + pw.length;
-        } else {
-          return pw.startCol === wc && wr >= pw.startRow && wr < pw.startRow + pw.length;
-        }
-      });
-      if (hasCross) return true;
-    }
-    return false;
-  }, [activeWord, board.placedWords]);
-
-  // Set of completed word IDs
-  const completedWordIds = useMemo(() => {
-    const completed = new Set<string>();
-    board.placedWords.forEach((pw) => {
-      let isWordMatch = true;
-      for (let i = 0; i < pw.length; i++) {
-        const r = pw.direction === 'across' ? pw.startRow : pw.startRow + i;
-        const c = pw.direction === 'across' ? pw.startCol + i : pw.startCol;
-        if (userGrid[r]?.[c] !== pw.term[i]) {
-          isWordMatch = false;
-          break;
-        }
-      }
-      if (isWordMatch) {
-        completed.add(pw.id);
-      }
-    });
-    return completed;
-  }, [board.placedWords, userGrid]);
-
-  // Unique syllables from current puzzle words for mobile quick keypad
-  const puzzleLetters = useMemo(() => {
-    const set = new Set<string>();
-    board.placedWords.forEach((pw) => {
-      for (const char of pw.term) {
-        if (isCompleteSyllable(char)) {
-          set.add(char);
-        }
-      }
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b, 'ko'));
-  }, [board.placedWords]);
-
-  // Handle cell click
   const handleCellClick = (r: number, c: number) => {
-    const cell = board.grid[r][c];
-    if (!cell.isActive) return;
+    const cell = board.grid[r]?.[c];
+    if (!cell || !cell.isActive) return;
 
-    // Check words covering this cell
+    sounds.playKey();
+
     const wordsAtCell = board.placedWords.filter((pw) => {
       if (pw.direction === 'across') {
         return pw.startRow === r && c >= pw.startCol && c < pw.startCol + pw.length;
@@ -509,7 +411,6 @@ export function App() {
 
     if (wordsAtCell.length === 0) return;
 
-    // If clicking same cell, toggle direction if cell is an intersection
     if (selectedCell?.row === r && selectedCell?.col === c) {
       if (wordsAtCell.length > 1) {
         const nextWord = wordsAtCell.find((w) => w.direction !== activeDirection) || wordsAtCell[0];
@@ -519,13 +420,9 @@ export function App() {
       return;
     }
 
-    // Check if clicked cell is already part of the current active word
     const isCellInCurrentWord = activeWord && wordsAtCell.some((w) => w.id === activeWord.id);
-
     setSelectedCell({ row: r, col: c });
 
-    // If clicking an intersection cell that is already in the active word, switch to the other direction!
-    // (e.g. user is on an across word and clicks the last cell which has a vertical word)
     if (isCellInCurrentWord && wordsAtCell.length > 1) {
       const otherWord = wordsAtCell.find((w) => w.direction !== activeDirection);
       if (otherWord) {
@@ -535,16 +432,13 @@ export function App() {
       }
     }
 
-    // Otherwise, prefer matching current active direction if available
-    const matchingWord =
-      wordsAtCell.find((w) => w.direction === activeDirection) || wordsAtCell[0];
+    const matchingWord = wordsAtCell.find((w) => w.direction === activeDirection) || wordsAtCell[0];
     if (matchingWord) {
       setActiveDirection(matchingWord.direction);
       setActiveWordId(matchingWord.id);
     }
   };
 
-  // Toggle direction explicitly
   const handleToggleDirection = () => {
     if (!selectedCell) return;
     const { row, col } = selectedCell;
@@ -555,12 +449,12 @@ export function App() {
         return pw.startCol === col && row >= pw.startRow && row < pw.startRow + pw.length;
       }
     });
+
     if (wordsAtCell.length > 1) {
       const nextWord = wordsAtCell.find((w) => w.direction !== activeDirection) || wordsAtCell[0];
       setActiveDirection(nextWord.direction);
       setActiveWordId(nextWord.id);
     } else if (activeWord) {
-      // If current cell has no intersection, find the intersecting word in the other direction along activeWord
       const targetDir: Direction = activeDirection === 'across' ? 'down' : 'across';
       let foundWord: PlacedWord | null = null;
       let targetPos: { row: number; col: number } | null = null;
@@ -593,451 +487,343 @@ export function App() {
     }
   };
 
-  // Select a word from the Clues list
   const handleSelectWord = (word: PlacedWord) => {
+    sounds.playKey();
     setActiveWordId(word.id);
     setActiveDirection(word.direction);
     let targetCell = { row: word.startRow, col: word.startCol };
+
     for (let i = 0; i < word.length; i++) {
       const r = word.direction === 'across' ? word.startRow : word.startRow + i;
       const c = word.direction === 'across' ? word.startCol + i : word.startCol;
-      if (!userGrid[r]?.[c]) {
+      if (!userGrid[r][c]) {
         targetCell = { row: r, col: c };
         break;
       }
     }
     setSelectedCell(targetCell);
-    sounds.playKey();
   };
 
-  // Previous & Next Word
-  const handlePrevWord = () => {
-    const currentIdx = board.placedWords.findIndex((w) => w.id === activeWordId);
-    const prevIdx = (currentIdx - 1 + board.placedWords.length) % board.placedWords.length;
-    handleSelectWord(board.placedWords[prevIdx]);
-  };
-
-  const handleNextWord = () => {
-    const currentIdx = board.placedWords.findIndex((w) => w.id === activeWordId);
-    const nextIdx = (currentIdx + 1) % board.placedWords.length;
-    handleSelectWord(board.placedWords[nextIdx]);
-  };
-
-  // Check if entire board is solved
+  // Check puzzle completion
   const checkBoardCompletion = useCallback(
-    (newGrid: string[][]) => {
+    (grid: string[][]) => {
       let allCorrect = true;
-      for (const pw of board.placedWords) {
-        for (let i = 0; i < pw.length; i++) {
-          const r = pw.direction === 'across' ? pw.startRow : pw.startRow + i;
-          const c = pw.direction === 'across' ? pw.startCol + i : pw.startCol;
-          if (newGrid[r]?.[c] !== pw.term[i]) {
-            allCorrect = false;
-            break;
+      for (let r = 0; r < board.size; r++) {
+        for (let c = 0; c < board.size; c++) {
+          const cell = board.grid[r]?.[c];
+          if (cell && cell.isActive) {
+            if (grid[r]?.[c] !== cell.solutionChar) {
+              allCorrect = false;
+              break;
+            }
           }
         }
         if (!allCorrect) break;
       }
 
-      if (allCorrect) {
-        sounds.playVictory();
-        confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+      if (!allCorrect) return;
 
-        const currentClearTime = elapsedSeconds;
-        const nextCount = clearCountInLevel + 1;
-        const newClears = { ...levelClears, [currentLevel]: Math.max(levelClears[currentLevel] || 0, nextCount) };
-        setLevelClears(newClears);
+      sounds.playVictory();
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+      });
 
-        // Record clear history
-        const newRec: BoardRecord = {
-          id: `rec_${Date.now()}`,
-          category: selectedCategory,
-          level: currentLevel,
-          boardNumber: currentBoardNumber,
-          timeSeconds: currentClearTime,
-          date: new Date().toISOString(),
-          wordCount: board.placedWords.length,
+      // Daily Challenge Completion
+      if (isDailyChallengeActive) {
+        const todayKST = getKSTDateString();
+        const updatedDaily = {
+          ...saveData.dailyChallenge,
+          completedDates: Array.from(new Set([...saveData.dailyChallenge.completedDates, todayKST])),
+          todayResult: {
+            date: todayKST,
+            completed: true,
+            elapsedSeconds,
+            wordCount: board.placedWords.length,
+          },
+          bestTimeSeconds: saveData.dailyChallenge.bestTimeSeconds
+            ? Math.min(saveData.dailyChallenge.bestTimeSeconds, elapsedSeconds)
+            : elapsedSeconds,
         };
-        setBoardRecords((prev) => [newRec, ...prev]);
+        const nextData = {
+          ...saveData,
+          hintBalance: saveData.hintBalance + 2,
+          dailyChallenge: updatedDaily,
+        };
+        setSaveData(nextData);
+        saveUserSaveData(nextData);
+        setIsDailyModalOpen(true);
+        return;
+      }
 
-        // Mark solved words for the Wordbook
-        setSolvedWordTerms((prev) => {
-          const updated = new Set(prev);
-          board.placedWords.forEach((pw) => updated.add(pw.term));
-          return updated;
-        });
+      // Normal Gate Completion
+      clearActiveGame(selectedCategory);
 
-        if (nextCount < 3) {
-          setClearCountInLevel(nextCount);
-          setLevelUpModal({
-            isOpen: true,
-            type: 'board_cleared',
-            clearedBoardNumber: nextCount,
-            clearTimeSeconds: currentClearTime,
-          });
+      const newlySolvedWords = new Set(saveData.solvedWordTerms);
+      for (const pw of board.placedWords) {
+        newlySolvedWords.add(pw.term);
+      }
+
+      const nextProg = { ...currentCatProgress };
+      const currentClearInLvl = (nextProg.clearCountInLevel || 0) + 1;
+      nextProg.clearCountInLevel = currentClearInLvl;
+      nextProg.levelClears[currentLevel] = Math.min(3, (nextProg.levelClears[currentLevel] || 0) + 1);
+      nextProg.totalClearedBoards = (nextProg.totalClearedBoards || 0) + 1;
+
+      let modalType: 'board_cleared' | 'level_cleared' | 'master_cleared' = 'board_cleared';
+      if (currentClearInLvl >= 3) {
+        if (currentLevel < 10) {
+          nextProg.maxUnlockedLevel = Math.max(nextProg.maxUnlockedLevel, currentLevel + 1);
+          nextProg.currentLevel = currentLevel + 1;
+          nextProg.clearCountInLevel = 0;
+          modalType = 'level_cleared';
         } else {
-          // Gate Cleared! Unlock next level gate
-          const nextLvl = Math.min(10, currentLevel + 1);
-          setMaxUnlockedLevel((prev) => Math.max(prev, nextLvl));
-
-          if (currentLevel < 10) {
-            setLevelUpModal({
-              isOpen: true,
-              type: 'level_cleared',
-              clearedBoardNumber: 3,
-              clearTimeSeconds: currentClearTime,
-            });
-          } else {
-            setLevelUpModal({
-              isOpen: true,
-              type: 'master_cleared',
-              clearedBoardNumber: 3,
-              clearTimeSeconds: currentClearTime,
-            });
-          }
+          modalType = 'master_cleared';
         }
       }
+
+      const newRecord: BoardRecord = {
+        id: `rec_${Date.now()}`,
+        category: selectedCategory,
+        level: currentLevel,
+        boardNumber: board.boardNumber,
+        timeSeconds: elapsedSeconds,
+        date: getKSTDateString(),
+        wordCount: board.placedWords.length,
+      };
+
+      const updatedAchievements = saveData.achievements.map((ach) => {
+        let progress = ach.progress;
+        let unlockedAt = ach.unlockedAt;
+
+        if (ach.id === 'first_clear') {
+          progress = 1;
+          if (!unlockedAt) unlockedAt = new Date().toISOString();
+        } else if (ach.id === 'word_50' || ach.id === 'word_100' || ach.id === 'word_300') {
+          progress = newlySolvedWords.size;
+          if (progress >= ach.maxProgress && !unlockedAt) unlockedAt = new Date().toISOString();
+        } else if (ach.id === 'category_master') {
+          progress = nextProg.totalClearedBoards;
+          if (progress >= 30 && !unlockedAt) unlockedAt = new Date().toISOString();
+        }
+
+        return { ...ach, progress, unlockedAt };
+      });
+
+      const nextData: UserSaveData = {
+        ...saveData,
+        categoryProgress: {
+          ...saveData.categoryProgress,
+          [selectedCategory]: nextProg,
+        },
+        records: [newRecord, ...saveData.records],
+        solvedWordTerms: Array.from(newlySolvedWords),
+        achievements: updatedAchievements,
+      };
+
+      setSaveData(nextData);
+      saveUserSaveData(nextData);
+
+      setLevelUpModal({
+        isOpen: true,
+        type: modalType,
+        clearedBoardNumber: board.boardNumber,
+        clearTimeSeconds: elapsedSeconds,
+      });
     },
     [
-      board.placedWords,
-      clearCountInLevel,
-      currentLevel,
-      currentBoardNumber,
+      board,
+      isDailyChallengeActive,
+      saveData,
       elapsedSeconds,
-      levelClears,
-      maxUnlockedLevel,
       selectedCategory,
+      currentCatProgress,
+      currentLevel,
     ]
   );
 
-  // Cell character input handler with smart Korean Hangul composition
-  const handleCellInput = (r: number, c: number, char: string) => {
-    const trimmed = char.trim();
-    if (!trimmed) return;
+  const applyCellInput = (r: number, c: number, char: string) => {
+    const newGrid = userGrid.map((rowArr) => [...rowArr]);
+    newGrid[r][c] = char;
+    setUserGrid(newGrid);
 
-    sounds.playKey();
+    const cellKey = `${r},${c}`;
+    if (wrongCells.has(cellKey)) {
+      setWrongCells((prev) => {
+        const next = new Set(prev);
+        next.delete(cellKey);
+        return next;
+      });
+    }
 
-    // Check if user entered multiple characters at once (e.g. pasted or typed entire word like "비례대표")
-    if (trimmed.length > 1 && Array.from(trimmed).every(ch => isCompleteSyllable(ch))) {
-      const syllables = Array.from(trimmed);
-      const newGrid = userGrid.map((rowArr) => [...rowArr]);
-
-      let nextPos = { row: r, col: c };
+    const cell = board.grid[r]?.[c];
+    if (char && cell && cell.solutionChar && char !== cell.solutionChar) {
+      sounds.playKey();
       if (activeWord) {
-        let startIdx = 0;
-        for (let i = 0; i < activeWord.length; i++) {
-          const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
-          const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
-          if (wr === r && wc === c) {
-            startIdx = i;
-            break;
-          }
-        }
-        syllables.forEach((syl, offset) => {
-          const wordIdx = startIdx + offset;
-          if (wordIdx < activeWord.length) {
-            const cellR = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + wordIdx;
-            const cellC = activeWord.direction === 'across' ? activeWord.startCol + wordIdx : activeWord.startCol;
-            newGrid[cellR][cellC] = syl;
-            nextPos = { row: cellR, col: cellC };
-          }
-        });
-      } else {
-        newGrid[r][c] = syllables[0];
+        recordWordMistake(activeWord.term, activeWord.definition, selectedCategory);
       }
-      setUserGrid(newGrid);
-      setSelectedCell(nextPos);
-      checkBoardCompletion(newGrid);
-      return;
+    } else if (char) {
+      sounds.playKey();
     }
 
-    const prevChar = userGrid[r]?.[c] || '';
-    const solutionChar = board.grid[r]?.[c]?.solutionChar || '';
-
-    // Smart Korean Hangul Assembly
-    const { currentCell, nextCell, shouldAdvance } = combineHangulInput(
-      prevChar,
-      trimmed,
-      solutionChar
-    );
-
-    const newGrid = userGrid.map((rowArr, rowIdx) =>
-      rowArr.map((val, colIdx) => (rowIdx === r && colIdx === c ? currentCell : val))
-    );
-
-    if (wrongCells.has(`${r}-${c}`)) {
-      const updated = new Set(wrongCells);
-      updated.delete(`${r}-${c}`);
-      setWrongCells(updated);
-    }
-
-    // Determine cursor movement and handle consonant overflow to next cell
-    if (shouldAdvance && activeWord) {
-      let currentIndex = -1;
-      for (let i = 0; i < activeWord.length; i++) {
-        const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
-        const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
-        if (wr === r && wc === c) {
-          currentIndex = i;
-          break;
-        }
-      }
-
-      if (currentIndex !== -1 && currentIndex < activeWord.length - 1) {
+    let nextCell = selectedCell;
+    if (char && activeWord) {
+      const currIdx =
+        activeWord.direction === 'across' ? c - activeWord.startCol : r - activeWord.startRow;
+      if (currIdx >= 0 && currIdx < activeWord.length - 1) {
         const nextR =
-          activeWord.direction === 'across'
-            ? activeWord.startRow
-            : activeWord.startRow + currentIndex + 1;
+          activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currIdx + 1;
         const nextC =
-          activeWord.direction === 'across'
-            ? activeWord.startCol + currentIndex + 1
-            : activeWord.startCol;
+          activeWord.direction === 'across' ? activeWord.startCol + currIdx + 1 : activeWord.startCol;
+        nextCell = { row: nextR, col: nextC };
+        setSelectedCell(nextCell);
+      }
+    }
 
-        // If an overflow consonant exists (e.g. typing 'ㄹ' after '비' for '비례')
-        if (nextCell) {
-          newGrid[nextR][nextC] = nextCell;
-        }
+    persistActiveSession(newGrid, revealedChosungs, nextCell, activeWordId, activeDirection);
+    checkBoardCompletion(newGrid);
+  };
 
-        setSelectedCell({ row: nextR, col: nextC });
+  const handleVirtualKeyInput = (jamo: string) => {
+    if (!selectedCell) return;
+    const { row, col } = selectedCell;
+    const currentVal = userGrid[row]?.[col] || '';
+    const sol = board.grid[row]?.[col]?.solutionChar || '';
+
+    const { currentCell, nextCell } = combineHangulInput(currentVal, jamo, sol);
+
+    const newGrid = userGrid.map((rowArr) => [...rowArr]);
+    newGrid[row][col] = currentCell;
+
+    let nextPos = selectedCell;
+    if (nextCell && activeWord) {
+      const currIdx =
+        activeWord.direction === 'across' ? col - activeWord.startCol : row - activeWord.startRow;
+      if (currIdx >= 0 && currIdx < activeWord.length - 1) {
+        const nextR =
+          activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currIdx + 1;
+        const nextC =
+          activeWord.direction === 'across' ? activeWord.startCol + currIdx + 1 : activeWord.startCol;
+        newGrid[nextR][nextC] = nextCell;
+        nextPos = { row: nextR, col: nextC };
+        setSelectedCell(nextPos);
       }
     }
 
     setUserGrid(newGrid);
-
-    // Play word complete sound if active word was just finished
-    if (activeWord && !completedWordIds.has(activeWord.id)) {
-      let isWordMatch = true;
-      for (let i = 0; i < activeWord.length; i++) {
-        const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
-        const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
-        if (newGrid[wr]?.[wc] !== activeWord.term[i]) {
-          isWordMatch = false;
-          break;
-        }
-      }
-      if (isWordMatch) {
-        sounds.playWordComplete();
-      }
-    }
-
+    persistActiveSession(newGrid, revealedChosungs, nextPos, activeWordId, activeDirection);
     checkBoardCompletion(newGrid);
   };
 
-  // Backspace handler with Korean Hangul stepwise decomposition
   const handleCellBackspace = (r: number, c: number) => {
     sounds.playKey();
     const currentVal = userGrid[r]?.[c] || '';
 
-    if (currentVal) {
-      // If current syllable has a final consonant (받침), remove just the final consonant first
-      if (isCompleteSyllable(currentVal)) {
-        const dec = decompose(currentVal);
-        if (dec && dec.jong) {
-          const withoutJong = compose(dec.cho, dec.jung, '');
-          const newGrid = userGrid.map((rowArr, rowIdx) =>
-            rowArr.map((val, colIdx) => (rowIdx === r && colIdx === c ? withoutJong : val))
-          );
-          setUserGrid(newGrid);
-          return;
-        } else if (dec) {
-          // If current syllable is 초성+중성 (no 받침, e.g. '비'), remove vowel to leave 초성 ('ㅂ')
-          const newGrid = userGrid.map((rowArr, rowIdx) =>
-            rowArr.map((val, colIdx) => (rowIdx === r && colIdx === c ? dec.cho : val))
-          );
-          setUserGrid(newGrid);
-          return;
+    if (currentVal.length > 0) {
+      const decomp = decompose(currentVal);
+      if (decomp) {
+        if (decomp.jong) {
+          applyCellInput(r, c, compose(decomp.cho, decomp.jung));
+        } else if (decomp.jung) {
+          applyCellInput(r, c, decomp.cho);
+        } else {
+          applyCellInput(r, c, '');
         }
+      } else {
+        applyCellInput(r, c, '');
       }
-
-      // Standalone consonant or single character: clear current cell
-      const newGrid = userGrid.map((rowArr, rowIdx) =>
-        rowArr.map((val, colIdx) => (rowIdx === r && colIdx === c ? '' : val))
-      );
-      setUserGrid(newGrid);
-    } else {
-      // Cell is already empty: move back to previous cell and clear it
-      if (activeWord) {
-        let currentIndex = -1;
-        for (let i = 0; i < activeWord.length; i++) {
-          const wr =
-            activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
-          const wc =
-            activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
-          if (wr === r && wc === c) {
-            currentIndex = i;
-            break;
-          }
-        }
-
-        if (currentIndex > 0) {
-          const prevR =
-            activeWord.direction === 'across'
-              ? activeWord.startRow
-              : activeWord.startRow + currentIndex - 1;
-          const prevC =
-            activeWord.direction === 'across'
-              ? activeWord.startCol + currentIndex - 1
-              : activeWord.startCol;
-          setSelectedCell({ row: prevR, col: prevC });
-
-          const newGrid = userGrid.map((rowArr, rowIdx) =>
-            rowArr.map((val, colIdx) => (rowIdx === prevR && colIdx === prevC ? '' : val))
-          );
-          setUserGrid(newGrid);
-        }
+    } else if (activeWord) {
+      const currIdx =
+        activeWord.direction === 'across' ? c - activeWord.startCol : r - activeWord.startRow;
+      if (currIdx > 0) {
+        const prevR =
+          activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currIdx - 1;
+        const prevC =
+          activeWord.direction === 'across' ? activeWord.startCol + currIdx - 1 : activeWord.startCol;
+        setSelectedCell({ row: prevR, col: prevC });
       }
     }
   };
 
-  // Next Cell
-  const handleNextCell = () => {
-    if (!selectedCell || !activeWord) return;
-    const { row, col } = selectedCell;
-    let currentIndex = -1;
-    for (let i = 0; i < activeWord.length; i++) {
-      const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
-      const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
-      if (wr === row && wc === col) {
-        currentIndex = i;
-        break;
-      }
-    }
-    if (currentIndex !== -1 && currentIndex < activeWord.length - 1) {
-      const nextR = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currentIndex + 1;
-      const nextC = activeWord.direction === 'across' ? activeWord.startCol + currentIndex + 1 : activeWord.startCol;
-      setSelectedCell({ row: nextR, col: nextC });
-    }
+  const handleCellInput = (r: number, c: number, value: string) => {
+    const trimmed = value.slice(-1);
+    applyCellInput(r, c, trimmed);
   };
 
-  // Prev Cell
   const handlePrevCell = () => {
     if (!selectedCell || !activeWord) return;
-    const { row, col } = selectedCell;
-    let currentIndex = -1;
-    for (let i = 0; i < activeWord.length; i++) {
-      const wr = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
-      const wc = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
-      if (wr === row && wc === col) {
-        currentIndex = i;
-        break;
-      }
-    }
-    if (currentIndex > 0) {
-      const prevR = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currentIndex - 1;
-      const prevC = activeWord.direction === 'across' ? activeWord.startCol + currentIndex - 1 : activeWord.startCol;
+    const currIdx =
+      activeWord.direction === 'across'
+        ? selectedCell.col - activeWord.startCol
+        : selectedCell.row - activeWord.startRow;
+    if (currIdx > 0) {
+      const prevR =
+        activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currIdx - 1;
+      const prevC =
+        activeWord.direction === 'across' ? activeWord.startCol + currIdx - 1 : activeWord.startCol;
       setSelectedCell({ row: prevR, col: prevC });
     }
   };
 
-  // Arrow key navigation
-  const handleNavigate = (dRow: number, dCol: number) => {
-    if (!selectedCell) return;
-    const size = board.size || 9;
-    let newR = selectedCell.row + dRow;
-    let newC = selectedCell.col + dCol;
-
-    while (newR >= 0 && newR < size && newC >= 0 && newC < size) {
-      if (board.grid[newR][newC].isActive) {
-        sounds.playKey();
-        handleCellClick(newR, newC);
-        return;
-      }
-      newR += dRow;
-      newC += dCol;
+  const handleNextCell = () => {
+    if (!selectedCell || !activeWord) return;
+    const currIdx =
+      activeWord.direction === 'across'
+        ? selectedCell.col - activeWord.startCol
+        : selectedCell.row - activeWord.startRow;
+    if (currIdx < activeWord.length - 1) {
+      const nextR =
+        activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currIdx + 1;
+      const nextC =
+        activeWord.direction === 'across' ? activeWord.startCol + currIdx + 1 : activeWord.startCol;
+      setSelectedCell({ row: nextR, col: nextC });
     }
   };
 
-  // -------------------------------------------------------------
-  // HINT LOGIC:
-  // - 3 Free Hints initially
-  // - Clicking hint opens Chosung Modal popup and decrements 1
-  // - When 0 hints remain, opens Rewarded Ad Modal to replenish!
-  // -------------------------------------------------------------
-  const handleRequestHint = () => {
-    if (hintBalance > 0) {
-      setHintBalance((prev) => Math.max(0, prev - 1));
-      setIsChosungModalOpen(true);
-    } else {
-      setIsAdModalOpen(true);
-    }
-  };
-
-  // Apply chosung to current active word's cells on the board
-  const handleApplyChosungToBoard = () => {
-    if (!activeWord) return;
-    const newRevealed = new Set(revealedChosungs);
-    for (let i = 0; i < activeWord.length; i++) {
-      const r = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
-      const c = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
-      newRevealed.add(`${r}-${c}`);
-    }
-    setRevealedChosungs(newRevealed);
-  };
-
-  // Ad reward granted (+2 hints)
-  const handleAdReward = (earnedHints: number) => {
-    setHintBalance((prev) => prev + earnedHints);
-  };
-
-  // Controls: Check Wrong Answers
-  const handleCheckWrong = () => {
+  const handleCheckAnswers = () => {
+    sounds.playKey();
     const wrong = new Set<string>();
-    board.grid.forEach((row, r) => {
-      row.forEach((cell, c) => {
-        if (cell.isActive) {
-          const userChar = userGrid[r]?.[c];
-          if (userChar && userChar !== cell.solutionChar) {
-            wrong.add(`${r}-${c}`);
+    for (let r = 0; r < board.size; r++) {
+      for (let c = 0; c < board.size; c++) {
+        const cell = board.grid[r]?.[c];
+        if (cell && cell.isActive && userGrid[r]?.[c]) {
+          if (userGrid[r][c] !== cell.solutionChar) {
+            wrong.add(`${r},${c}`);
           }
         }
-      });
-    });
-
-    if (wrong.size > 0) {
-      sounds.playError();
-      setWrongCells(wrong);
-      setTimeout(() => {
-        setWrongCells(new Set());
-      }, 2500);
-    } else {
+      }
+    }
+    setWrongCells(wrong);
+    if (wrong.size === 0) {
       sounds.playWordComplete();
+    } else {
+      sounds.playError();
     }
   };
 
-  // Controls: Clear Active Word
-  const handleClearActiveWord = () => {
-    if (!activeWord) return;
-    const newGrid = userGrid.map((rowArr, r) =>
-      rowArr.map((val, c) => {
-        let isInWord = false;
-        if (activeWord.direction === 'across') {
-          isInWord = r === activeWord.startRow && c >= activeWord.startCol && c < activeWord.startCol + activeWord.length;
-        } else {
-          isInWord = c === activeWord.startCol && r >= activeWord.startRow && r < activeWord.startRow + activeWord.length;
-        }
-        return isInWord ? '' : val;
-      })
-    );
-    setUserGrid(newGrid);
-    setSelectedCell({ row: activeWord.startRow, col: activeWord.startCol });
-  };
-
-  // Controls: Reset Board
   const handleResetBoard = () => {
-    const size = board.size || 9;
-    setUserGrid(Array.from({ length: size }, () => Array(size).fill('')));
-    setWrongCells(new Set());
-  };
-
-  // Controls: Generate Fresh Board
-  const handleGenerateNewBoard = () => {
-    const fresh = generateFreshBoard(currentLevel, currentBoardNumber, selectedCategory);
-    setBoard(fresh);
-    setUserGrid(Array.from({ length: fresh.size }, () => Array(fresh.size).fill('')));
+    sounds.playKey();
+    const emptyGrid = Array.from({ length: board.size || 8 }, () => Array(board.size || 8).fill(''));
+    setUserGrid(emptyGrid);
     setWrongCells(new Set());
     setRevealedChosungs(new Set());
-    setActiveBackground((prev) => getRandomBackgroundForLevel(currentLevel, prev?.id));
     setElapsedSeconds(0);
+    clearActiveGame(selectedCategory);
+  };
+
+  const handleNewPuzzle = () => {
+    sounds.playKey();
+    const fresh = generateFreshBoard(currentLevel, currentBoardNumber, selectedCategory);
+    setBoard(fresh);
+    const emptyGrid = Array.from({ length: fresh.size }, () => Array(fresh.size).fill(''));
+    setUserGrid(emptyGrid);
+    setWrongCells(new Set());
+    setRevealedChosungs(new Set());
+    setElapsedSeconds(0);
+    setIsDailyChallengeActive(false);
+    clearActiveGame(selectedCategory);
+
     if (fresh.placedWords.length > 0) {
       const first = fresh.placedWords[0];
       setActiveWordId(first.id);
@@ -1046,63 +832,142 @@ export function App() {
     }
   };
 
-  // Placement Test Completion
-  const handleTestComplete = (recLevel: number) => {
-    setIsTested(true);
-    setIsPlacementTestOpen(false);
-    setMaxUnlockedLevel((prev) => Math.max(prev, recLevel));
-    setCurrentLevel(recLevel);
-    setClearCountInLevel(0);
-    loadBoard(recLevel, 1, selectedCategory);
+  const handleApplyChosungToBoard = () => {
+    if (hintBalance <= 0 || !activeWord) return;
+    const newRevealed = new Set(revealedChosungs);
+    for (let i = 0; i < activeWord.length; i++) {
+      const r = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
+      const c = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
+      newRevealed.add(`${r},${c}`);
+    }
+    setRevealedChosungs(newRevealed);
+    persistActiveSession(userGrid, newRevealed, selectedCell, activeWordId, activeDirection);
+
+    const nextData = { ...saveData, hintBalance: Math.max(0, hintBalance - 1) };
+    setSaveData(nextData);
+    saveUserSaveData(nextData);
+
+    recordWordHintUsed(activeWord.term, activeWord.definition, selectedCategory);
+    setIsChosungModalOpen(false);
   };
 
-  // Next Board in Level
+  const handleAdReward = () => {
+    const nextData = { ...saveData, hintBalance: hintBalance + 2 };
+    setSaveData(nextData);
+    saveUserSaveData(nextData);
+    setIsAdModalOpen(false);
+    sounds.playVictory();
+  };
+
+  const handleTestComplete = (assignedLevel: number) => {
+    sounds.playVictory();
+    const nextProg = {
+      ...currentCatProgress,
+      currentLevel: assignedLevel,
+      maxUnlockedLevel: Math.max(currentCatProgress.maxUnlockedLevel, assignedLevel),
+      isTested: true,
+      clearCountInLevel: 0,
+    };
+    const nextData = {
+      ...saveData,
+      categoryProgress: {
+        ...saveData.categoryProgress,
+        [selectedCategory]: nextProg,
+      },
+    };
+    setSaveData(nextData);
+    saveUserSaveData(nextData);
+    setIsPlacementTestOpen(false);
+    loadBoard(assignedLevel, 1, selectedCategory);
+  };
+
   const handleNextBoard = () => {
     setLevelUpModal((prev) => ({ ...prev, isOpen: false }));
-    loadBoard(currentLevel, clearCountInLevel + 1, selectedCategory);
+    const targetBoardNum = Math.min(3, (currentCatProgress.clearCountInLevel % 3) + 1);
+    loadBoard(currentLevel, targetBoardNum, selectedCategory);
   };
 
-  // Level Up to Next Level
   const handleNextLevel = () => {
     setLevelUpModal((prev) => ({ ...prev, isOpen: false }));
-    const nextLvl = Math.min(10, currentLevel + 1);
-    setMaxUnlockedLevel((prev) => Math.max(prev, nextLvl));
-    setCurrentLevel(nextLvl);
-    setClearCountInLevel(0);
-    loadBoard(nextLvl, 1, selectedCategory);
+    loadBoard(currentLevel, 1, selectedCategory);
   };
 
-  // Reset all game data back to initial defaults
+  const handleClaimAchievementReward = (achId: string, rewardHints: number) => {
+    const updatedAchievements = saveData.achievements.map((a) =>
+      a.id === achId ? { ...a, rewardClaimed: true } : a
+    );
+    const nextData = {
+      ...saveData,
+      hintBalance: saveData.hintBalance + rewardHints,
+      achievements: updatedAchievements,
+    };
+    setSaveData(nextData);
+    saveUserSaveData(nextData);
+  };
+
+  const handleChangeFontSize = (size: FontSizeSetting) => {
+    const nextData = {
+      ...saveData,
+      settings: { ...saveData.settings, fontSize: size },
+    };
+    setSaveData(nextData);
+    saveUserSaveData(nextData);
+  };
+
+  const handleToggleHighContrast = () => {
+    const nextData = {
+      ...saveData,
+      settings: { ...saveData.settings, highContrast: !saveData.settings.highContrast },
+    };
+    setSaveData(nextData);
+    saveUserSaveData(nextData);
+  };
+
   const handleResetProgress = () => {
-    sounds.playKey();
-    setCurrentLevel(1);
-    setMaxUnlockedLevel(1);
-    setClearCountInLevel(0);
-    setLevelClears({});
-    setHintBalance(3);
-    setBoardRecords([]);
-    setSolvedWordTerms(new Set());
-    localStorage.removeItem(STORAGE_KEY);
-    loadBoard(1, 1, selectedCategory);
-    setActiveTab('CHALLENGE');
+    if (window.confirm('정말 모든 진행도와 기록을 초기화하시겠습니까? (되돌릴 수 없습니다)')) {
+      localStorage.clear();
+      window.location.reload();
+    }
   };
 
-  const selectedCellChar = selectedCell ? userGrid[selectedCell.row]?.[selectedCell.col] || '' : '';
+  const handleOpenPolicy = (tab: PolicyTab) => {
+    setPolicyModalTab(tab);
+    setIsPolicyModalOpen(true);
+  };
+
+  const handleOpenCertificate = (cat: CategoryId = selectedCategory) => {
+    setCertificateCategory(cat);
+    setIsCertificateOpen(true);
+  };
+
+  const certProg = saveData.categoryProgress[certificateCategory] || currentCatProgress;
+  const certEligibility = isCategoryMasterEligible(certificateCategory, certProg);
 
   return (
     <div
-      className="min-h-screen text-slate-800 pb-16 font-sans relative bg-fixed bg-cover bg-center overflow-x-hidden transition-all duration-300"
-      style={{ backgroundImage: `url('${activeBackground.url}')` }}
+      className={`min-h-screen text-slate-800 flex flex-col font-sans transition-all ${
+        saveData.settings.fontSize === 'huge'
+          ? 'text-[120%]'
+          : saveData.settings.fontSize === 'large'
+          ? 'text-[110%]'
+          : ''
+      } ${saveData.settings.highContrast ? 'contrast-125' : ''}`}
     >
-      {/* 50% Translucent atmosphere overlay so the level background is clearly visible! */}
-      <div className="absolute inset-0 bg-white/45 backdrop-blur-[1px] pointer-events-none -z-0" />
+      {/* Background Graphic Layer */}
+      {activeBackground && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 opacity-15 bg-cover bg-center transition-all duration-700"
+          style={{ backgroundImage: `url(${activeBackground.url})` }}
+        />
+      )}
 
-      <div className="relative z-10">
-        {/* 1. Top Header with Date Badge & Timer & App Install */}
+      {/* Main Container */}
+      <div className="relative z-10 flex-1 flex flex-col">
+        {/* Top Header */}
         <WorkbookHeader
+          selectedCategory={selectedCategory}
           currentLevel={currentLevel}
           clearCountInLevel={clearCountInLevel}
-          selectedCategory={selectedCategory}
           elapsedSeconds={elapsedSeconds}
           isTimerRunning={isTimerRunning}
           onOpenTest={() => setIsPlacementTestOpen(true)}
@@ -1110,38 +975,28 @@ export function App() {
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
         />
 
-        {/* Locked Gate Alert Banner */}
-        {lockAlertToast && (
-          <div className="max-w-md mx-auto my-2 px-4 py-2 bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-            <span>{lockAlertToast}</span>
-            <button
-              onClick={() => setLockAlertToast(null)}
-              className="ml-3 font-black text-amber-200 hover:text-white"
-            >
-              ✕
-            </button>
-          </div>
+        {/* TAB 1: HOME */}
+        {activeTab === 'HOME' && (
+          <HomeScreen
+            saveData={saveData}
+            onSelectCategory={(cat) => {
+              handleSelectCategory(cat);
+              setActiveTab('CHALLENGE');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onResumeGame={(cat) => handleResumeGame(cat)}
+            onOpenDailyChallenge={() => setIsDailyModalOpen(true)}
+            onNavigateTab={(tab) => {
+              setActiveTab(tab);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onShareApp={() => {}}
+          />
         )}
 
-        {/* Daily Attendance Bonus Toast */}
-        {attendanceToast && (
-          <div className="max-w-md mx-auto my-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs rounded-xl shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-            <span className="flex items-center gap-1.5">{attendanceToast}</span>
-            <button
-              onClick={() => setAttendanceToast(null)}
-              className="ml-3 text-emerald-200 hover:text-white text-sm"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* ============================================================== */}
-        {/* TAB 1: CHALLENGE (도전 - 메인 크로스워드 퍼즐 플레이) */}
-        {/* ============================================================== */}
+        {/* TAB 2: CHALLENGE */}
         {activeTab === 'CHALLENGE' && (
           <>
-            {/* Unified Category & Level Bar: 분야와 레벨을 같은 줄에 배치하고 클릭 시 위아래로 선택 메뉴 노출 */}
             <CategoryLevelBar
               selectedCategory={selectedCategory}
               onSelectCategory={handleSelectCategory}
@@ -1149,54 +1004,47 @@ export function App() {
               currentLevel={currentLevel}
               maxUnlockedLevel={maxUnlockedLevel}
               levelClears={levelClears}
-              onSelectLevel={(lvl) => {
-                if (lvl > maxUnlockedLevel) {
-                  return;
-                }
-                setCurrentLevel(lvl);
-                setClearCountInLevel(0);
-                loadBoard(lvl, 1, selectedCategory);
-              }}
-              onLockedClick={(lvl) => {
-                setLockAlertToast(`🔒 Lv.${lvl}은 아직 잠겨 있습니다. 이전 레벨(Lv.${lvl - 1})의 3판 관문을 모두 클리어하거나 레벨 진단으로 해금하세요!`);
-                setTimeout(() => setLockAlertToast(null), 3500);
-              }}
+              onSelectLevel={(lvl) => loadBoard(lvl, 1, selectedCategory)}
             />
 
-            {/* Friendly Non-intrusive Placement Test Invitation */}
-            {!isTested && (
-              <aside
-                aria-label="어휘 레벨 진단 안내"
-                className="max-w-5xl mx-auto px-2 sm:px-3 my-0.5"
-              >
-                <div className="bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50 border border-sky-200/80 rounded-xl px-3 py-1.5 shadow-2xs flex items-center justify-between gap-2 text-slate-700">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-base shrink-0">🎯</span>
-                    <p className="text-xs font-bold text-slate-800 truncate">
-                      내 실력에 딱 맞는 레벨이 궁금하다면? <span className="text-slate-500 font-normal hidden sm:inline">5문항 1분 레벨 진단</span>
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      sounds.playKey();
-                      setIsPlacementTestOpen(true);
-                    }}
-                    className="px-2.5 py-1 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-lg shadow-2xs transition shrink-0 cursor-pointer text-center"
-                  >
-                    레벨 진단
-                  </button>
-                </div>
-              </aside>
-            )}
+            <main className="max-w-6xl mx-auto px-1 sm:px-4 py-2 w-full">
+              <ActiveClueCard
+                activeWord={activeWord}
+                activeDirection={activeDirection}
+                theme={currentTheme}
+                isCompleted={activeWord ? completedWordIds.has(activeWord.id) : false}
+                isIntersection={Boolean(
+                  selectedCell &&
+                  board.placedWords.filter((pw) => {
+                    if (pw.direction === 'across') {
+                      return pw.startRow === selectedCell.row && selectedCell.col >= pw.startCol && selectedCell.col < pw.startCol + pw.length;
+                    } else {
+                      return pw.startCol === selectedCell.col && selectedCell.row >= pw.startRow && selectedCell.row < pw.startRow + pw.length;
+                    }
+                  }).length > 1
+                )}
+                hintBalance={hintBalance}
+                isLargeFont={saveData.settings.fontSize !== 'normal'}
+                selectedCategory={selectedCategory}
+                onRequestHint={() => setIsChosungModalOpen(true)}
+                onToggleDirection={handleToggleDirection}
+                onPrevWord={() => {
+                  if (board.placedWords.length === 0) return;
+                  const idx = board.placedWords.findIndex((w) => w.id === activeWordId);
+                  const prevIdx = idx > 0 ? idx - 1 : board.placedWords.length - 1;
+                  handleSelectWord(board.placedWords[prevIdx]);
+                }}
+                onNextWord={() => {
+                  if (board.placedWords.length === 0) return;
+                  const idx = board.placedWords.findIndex((w) => w.id === activeWordId);
+                  const nextIdx = idx < board.placedWords.length - 1 ? idx + 1 : 0;
+                  handleSelectWord(board.placedWords[nextIdx]);
+                }}
+              />
 
-            {/* 3. Main Play Area */}
-            <main className="w-full max-w-6xl mx-auto px-0 sm:px-3 mt-0.5 pb-20">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
-                {/* Left / Center: Unified Interactive Play Area ("Merged Box") */}
-                <div className="lg:col-span-7 flex flex-col items-center w-full px-0 sm:px-1">
-                  <div className="w-full max-w-[min(100vw,580px)] mx-auto bg-white/95 backdrop-blur-md rounded-none sm:rounded-3xl border-y sm:border border-slate-200/90 shadow-md sm:shadow-lg overflow-hidden flex flex-col">
-                    {/* 1. Crossword Board */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 sm:gap-4 items-start w-full">
+                <div className="lg:col-span-7 flex flex-col items-center w-full px-0 sm:px-0">
+                  <div className="w-full bg-white sm:rounded-2xl border-y sm:border border-slate-200/90 shadow-xs p-1.5 sm:p-4 mb-0 sm:mb-3">
                     <CrosswordBoard
                       board={board}
                       theme={currentTheme}
@@ -1206,50 +1054,44 @@ export function App() {
                       selectedCell={selectedCell}
                       wrongCells={wrongCells}
                       revealedChosungs={revealedChosungs}
-                      isLargeFont={isLargeFont}
+                      isLargeFont={saveData.settings.fontSize !== 'normal'}
                       onCellClick={handleCellClick}
                       onCellInput={handleCellInput}
                       onCellBackspace={handleCellBackspace}
-                      onNavigate={handleNavigate}
-                      currentPageNumber={currentLevel}
-                    />
-
-                    {/* 2. Prominent Clue / Help Card */}
-                    <ActiveClueCard
-                      activeWord={activeWord}
-                      activeDirection={activeDirection}
-                      theme={currentTheme}
-                      isIntersection={isIntersection || hasWordIntersection}
-                      hintBalance={hintBalance}
-                      isLargeFont={isLargeFont}
-                      selectedCategory={selectedCategory}
-                      onRequestHint={handleRequestHint}
-                      onToggleDirection={handleToggleDirection}
-                      onPrevWord={handlePrevWord}
-                      onNextWord={handleNextWord}
-                      isCompleted={activeWord ? completedWordIds.has(activeWord.id) : false}
-                      userGrid={userGrid}
-                    />
-
-                    {/* 3. In-Game Controls */}
-                    <GameControls
-                      hintBalance={hintBalance}
-                      onRequestHint={handleRequestHint}
-                      onCheckWrong={handleCheckWrong}
-                      onClearActiveWord={handleClearActiveWord}
-                      onResetBoard={handleResetBoard}
-                      onGenerateNewBoard={handleGenerateNewBoard}
-                    />
-
-                    {/* 4. Virtual Hangul Keypad */}
-                    <VirtualHangulKeypad
-                      currentCellChar={selectedCellChar}
-                      puzzleLetters={puzzleLetters}
-                      onInputChar={(char) => {
-                        if (selectedCell) {
-                          handleCellInput(selectedCell.row, selectedCell.col, char);
-                        }
+                      onNavigate={(dRow, dCol) => {
+                        if (!selectedCell) return;
+                        const nextR = Math.max(0, Math.min(board.size - 1, selectedCell.row + dRow));
+                        const nextC = Math.max(0, Math.min(board.size - 1, selectedCell.col + dCol));
+                        setSelectedCell({ row: nextR, col: nextC });
                       }}
+                    />
+
+                    <div className="w-full mt-2 pt-2 border-t border-slate-100">
+                      <GameControls
+                        hintBalance={hintBalance}
+                        onRequestHint={() => setIsChosungModalOpen(true)}
+                        onCheckWrong={handleCheckAnswers}
+                        onClearActiveWord={() => {
+                          if (!activeWord) return;
+                          const newGrid = userGrid.map((r) => [...r]);
+                          for (let i = 0; i < activeWord.length; i++) {
+                            const r = activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + i;
+                            const c = activeWord.direction === 'across' ? activeWord.startCol + i : activeWord.startCol;
+                            newGrid[r][c] = '';
+                          }
+                          setUserGrid(newGrid);
+                          persistActiveSession(newGrid, revealedChosungs, selectedCell, activeWordId, activeDirection);
+                        }}
+                        onResetBoard={handleResetBoard}
+                        onGenerateNewBoard={handleNewPuzzle}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full px-0 sm:px-0 mb-3">
+                    <VirtualHangulKeypad
+                      currentCellChar={selectedCell ? userGrid[selectedCell.row]?.[selectedCell.col] || '' : ''}
+                      onInputChar={handleVirtualKeyInput}
                       onBackspace={() => {
                         if (selectedCell) {
                           handleCellBackspace(selectedCell.row, selectedCell.col);
@@ -1261,7 +1103,6 @@ export function App() {
                   </div>
                 </div>
 
-                {/* Right: Across & Down Clues Lists */}
                 <div className="lg:col-span-5 w-full px-2 sm:px-0">
                   <CluesList
                     placedWords={board.placedWords}
@@ -1273,7 +1114,6 @@ export function App() {
               </div>
             </main>
 
-            {/* Current Puzzle Word Encyclopedia & Study Guide (High Publisher Content) */}
             <PuzzleStageKnowledgeGuide
               placedWords={board.placedWords}
               categoryName={getCategoryMeta(selectedCategory).name}
@@ -1281,102 +1121,114 @@ export function App() {
               boardNumber={board.boardNumber}
               completedWordIds={completedWordIds}
               onSelectWord={handleSelectWord}
+              initialLearningMode={saveData.settings.learningMode}
             />
-
-            {/* High-Value Publisher Content: 8대 분야 시사·교양 심층 지식 백과 & 상식 학습 칼럼 */}
-            <section className="max-w-6xl mx-auto px-3 sm:px-4 my-6" aria-label="8대 지식 탐구 백과">
-              <KnowledgeArticleHub
-                initialCategory={selectedCategory}
-                onSelectCategoryForPuzzle={(catId) => {
-                  handleSelectCategory(catId);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                showAdInside={false}
-              />
-            </section>
           </>
         )}
 
-        {/* ============================================================== */}
-        {/* TAB 2: KNOWLEDGE (지식백과 - 8대 영역 심층 칼럼 및 용어 사전) */}
-        {/* ============================================================== */}
+        {/* TAB 3: KNOWLEDGE */}
         {activeTab === 'KNOWLEDGE' && (
-          <main className="max-w-6xl mx-auto px-3 sm:px-4 mt-2 pb-24">
-            <KnowledgeArticleHub
-              initialCategory={selectedCategory}
-              onSelectCategoryForPuzzle={(catId) => {
-                handleSelectCategory(catId);
-                setActiveTab('CHALLENGE');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              showAdInside={true}
-            />
-          </main>
-        )}
-
-        {/* ============================================================== */}
-        {/* TAB 2: RECORDS (내기록 - 통계, 히스토리, 타임어택) */}
-        {/* ============================================================== */}
-        {activeTab === 'RECORDS' && (
-          <RecordsView
-            levelClears={levelClears}
-            boardRecords={boardRecords}
-            maxUnlockedLevel={maxUnlockedLevel}
-            currentLevel={currentLevel}
-            onGoToPlay={() => setActiveTab('CHALLENGE')}
-          />
-        )}
-
-        {/* ============================================================== */}
-        {/* TAB 3: WORDBOOK (낱말사전 - 정치 용어사전 및 학습 완료 체크) */}
-        {/* ============================================================== */}
-        {activeTab === 'WORDBOOK' && (
-          <WordbookView
+          <KnowledgeHubView
+            selectedCategory={selectedCategory}
             maxUnlockedLevel={maxUnlockedLevel}
             solvedWordTerms={solvedWordTerms}
-            initialCategory={selectedCategory}
+            onSelectCategory={handleSelectCategory}
+            wrongWords={saveData.wrongWords}
+            onMarkMastered={(term) => {
+              const updated = saveData.wrongWords.map((w) =>
+                w.term === term ? { ...w, mastered: !w.mastered } : w
+              );
+              const nextData = { ...saveData, wrongWords: updated };
+              setSaveData(nextData);
+              saveUserSaveData(nextData);
+            }}
+            onClearMistake={(term) => {
+              const updated = saveData.wrongWords.filter((w) => w.term !== term);
+              const nextData = { ...saveData, wrongWords: updated };
+              setSaveData(nextData);
+              saveUserSaveData(nextData);
+            }}
           />
         )}
 
-        {/* ============================================================== */}
-        {/* TAB 4: MYPAGE (마이페이지 - 프로필, 인증서, 힌트 충전, 설정) */}
-        {/* ============================================================== */}
-        {activeTab === 'MYPAGE' && (
+        {/* TAB 4: RECORDS */}
+        {activeTab === 'RECORDS' && (
+          <RecordsView
+            selectedCategory={selectedCategory}
+            categoryProgressMap={saveData.categoryProgress}
+            boardRecords={boardRecords}
+            onSelectCategory={handleSelectCategory}
+            onGoToPlay={() => {
+              setActiveTab('CHALLENGE');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenCertificate={(cat) => handleOpenCertificate(cat)}
+          />
+        )}
+
+        {/* TAB 5: SETTINGS */}
+        {activeTab === 'SETTINGS' && (
           <MyPageView
             currentLevel={currentLevel}
             maxUnlockedLevel={maxUnlockedLevel}
             hintBalance={hintBalance}
             currentTheme={currentTheme}
             isMuted={isMuted}
-            isLargeFont={isLargeFont}
+            fontSize={saveData.settings.fontSize}
+            highContrast={saveData.settings.highContrast}
             selectedCategory={selectedCategory}
+            categoryClears={currentCatProgress.levelClears}
+            totalClearedBoards={currentCatProgress.totalClearedBoards}
+            unlockedAchievementsCount={saveData.achievements.filter((a) => a.unlockedAt !== null).length}
+            totalAchievementsCount={saveData.achievements.length}
             onSelectCategory={handleSelectCategory}
-            onSelectTheme={(themeId) => setUserThemeId(themeId)}
-            onToggleSound={() => {
-              sounds.isMuted = !isMuted;
-              setIsMuted(!isMuted);
+            onSelectTheme={(themeId) => {
+              setUserThemeId(themeId);
+              const nextData = {
+                ...saveData,
+                settings: { ...saveData.settings, themeId },
+              };
+              setSaveData(nextData);
+              saveUserSaveData(nextData);
             }}
-            onToggleLargeFont={handleToggleLargeFont}
+            onToggleSound={() => {
+              const nextMuted = !isMuted;
+              sounds.isMuted = nextMuted;
+              setIsMuted(nextMuted);
+              const nextData = {
+                ...saveData,
+                settings: { ...saveData.settings, isMuted: nextMuted },
+              };
+              setSaveData(nextData);
+              saveUserSaveData(nextData);
+            }}
+            onChangeFontSize={handleChangeFontSize}
+            onToggleHighContrast={handleToggleHighContrast}
             onOpenTest={() => setIsPlacementTestOpen(true)}
             onOpenAdModal={() => setIsAdModalOpen(true)}
-            onOpenCertificate={() => setIsCertificateOpen(true)}
+            onOpenCertificate={() => handleOpenCertificate(selectedCategory)}
+            onOpenAchievements={() => setIsAchievementsModalOpen(true)}
             onOpenInstallModal={() => setIsInstallModalOpen(true)}
             onOpenPolicy={handleOpenPolicy}
             onResetProgress={handleResetProgress}
-            onDataRestored={handleDataRestored}
+            onDataRestored={() => {
+              const refreshed = loadUserSaveData();
+              setSaveData(refreshed);
+              loadBoard(refreshed.categoryProgress[refreshed.selectedCategory]?.currentLevel || 1, 1, refreshed.selectedCategory);
+            }}
           />
         )}
 
-        {/* Google AdSense Responsive Banner Slot (Rendered alongside rich publisher content) */}
+        {/* Google AdSense Responsive Banner Slot */}
         {activeTab !== 'KNOWLEDGE' && (
           <AdBannerSlot slotId="crossword_bottom_banner" />
         )}
 
-        {/* Global Footer with Google AdSense Compliant Policy Links */}
+        {/* Global Footer with Policy Links */}
         <SiteFooter onOpenPolicy={handleOpenPolicy} />
       </div>
 
-      {/* Persistent Mobile Bottom Navigation Bar */}
+      {/* Persistent Mobile Bottom Navigation Bar (5 Tabs) */}
       <BottomNavBar
         activeTab={activeTab}
         onTabChange={(tab) => {
@@ -1394,7 +1246,7 @@ export function App() {
         onClose={() => setIsCategoryModalOpen(false)}
       />
 
-      {/* 4. Placement Test Modal (Direct Input Mode) */}
+      {/* Placement Test Modal */}
       <PoliticsPlacementTest
         isOpen={isPlacementTestOpen}
         selectedCategory={selectedCategory}
@@ -1402,7 +1254,7 @@ export function App() {
         onComplete={handleTestComplete}
       />
 
-      {/* 5. Chosung Hint Popup Modal */}
+      {/* Chosung Hint Modal */}
       <ChosungHintModal
         isOpen={isChosungModalOpen}
         onClose={() => setIsChosungModalOpen(false)}
@@ -1411,14 +1263,14 @@ export function App() {
         onApplyToBoard={handleApplyChosungToBoard}
       />
 
-      {/* 6. Rewarded Ad Modal (Next Update Integration Ready) */}
+      {/* Rewarded Ad Modal */}
       <RewardedAdModal
         isOpen={isAdModalOpen}
         onClose={() => setIsAdModalOpen(false)}
         onReward={handleAdReward}
       />
 
-      {/* 7. Level Up / Board Clear Modal */}
+      {/* Level Up / Board Clear Modal */}
       <LevelUpModal
         isOpen={levelUpModal.isOpen}
         type={levelUpModal.type}
@@ -1429,25 +1281,50 @@ export function App() {
         onNextLevel={handleNextLevel}
         onOpenCertificate={() => {
           setLevelUpModal((prev) => ({ ...prev, isOpen: false }));
-          setIsCertificateOpen(true);
+          handleOpenCertificate(selectedCategory);
         }}
       />
 
-      {/* 8. Master Certificate Modal */}
+      {/* Master Certificate Modal */}
       <MasterCertificate
         isOpen={isCertificateOpen}
-        selectedCategory={selectedCategory}
+        selectedCategory={certificateCategory}
+        defaultUserName={saveData.nickname}
+        isEligible={certEligibility.eligible}
+        clearedBoards={certEligibility.clearedBoards}
+        totalRequired={certEligibility.totalRequired}
         onClose={() => setIsCertificateOpen(false)}
+        onContinueChallenge={() => {
+          setIsCertificateOpen(false);
+          handleSelectCategory(certificateCategory);
+          setActiveTab('CHALLENGE');
+        }}
       />
 
-      {/* 9. Legal Policies & Google AdSense Compliance Modal */}
+      {/* Daily Challenge Modal */}
+      <DailyChallengeModal
+        isOpen={isDailyModalOpen}
+        onClose={() => setIsDailyModalOpen(false)}
+        saveData={saveData}
+        onStartDailyPuzzle={handleStartDailyChallenge}
+      />
+
+      {/* Achievements Modal */}
+      <AchievementsModal
+        isOpen={isAchievementsModalOpen}
+        onClose={() => setIsAchievementsModalOpen(false)}
+        achievements={saveData.achievements}
+        onClaimReward={handleClaimAchievementReward}
+      />
+
+      {/* Legal Policies Modal */}
       <LegalPolicyModal
         isOpen={isPolicyModalOpen}
         initialTab={policyModalTab}
         onClose={() => setIsPolicyModalOpen(false)}
       />
 
-      {/* 10. PWA App Install Modal with Real App Icon */}
+      {/* PWA App Install Modal */}
       <InstallAppModal
         isOpen={isInstallModalOpen}
         onClose={() => setIsInstallModalOpen(false)}

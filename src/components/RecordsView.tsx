@@ -1,48 +1,56 @@
-import React from 'react';
-import { Trophy, Clock, Award } from 'lucide-react';
-import { BoardRecord } from '../types/puzzle';
-import { getCategoryMeta } from '../data/categoryRegistry';
+import React, { useState } from 'react';
+import { Trophy, Award, ArrowRight, CheckCircle2, Lock } from 'lucide-react';
+import { BoardRecord, CategoryId } from '../types/puzzle';
+import { CATEGORIES_REGISTRY, getCategoryMeta } from '../data/categoryRegistry';
+import { CategoryProgress } from '../types/progress';
+import { isCategoryMasterEligible } from '../services/storageService';
 import { sounds } from '../utils/audio';
 
 interface RecordsViewProps {
-  levelClears: Record<number, number>;
+  selectedCategory: CategoryId;
+  categoryProgressMap: Record<CategoryId, CategoryProgress>;
   boardRecords: BoardRecord[];
-  maxUnlockedLevel: number;
-  currentLevel: number;
+  onSelectCategory: (category: CategoryId) => void;
   onGoToPlay: () => void;
+  onOpenCertificate: (category: CategoryId) => void;
 }
 
 export const RecordsView: React.FC<RecordsViewProps> = ({
-  levelClears,
+  selectedCategory,
+  categoryProgressMap,
   boardRecords,
-  maxUnlockedLevel,
-  currentLevel,
+  onSelectCategory,
   onGoToPlay,
+  onOpenCertificate,
 }) => {
-  const levelNames: Record<number, { name: string; words: number }> = {
-    1: { name: '기초 민주', words: 10 },
-    2: { name: '의회 기본', words: 10 },
-    3: { name: '정부 형태', words: 10 },
-    4: { name: '선거 실무', words: 15 },
-    5: { name: '비교 정치', words: 15 },
-    6: { name: '입법 통제', words: 15 },
-    7: { name: '외교 안보', words: 15 },
-    8: { name: '정치 사상', words: 20 },
-    9: { name: '제도 분석', words: 20 },
-    10: { name: '정치 마스터', words: 20 },
+  const [activeCat, setActiveCat] = useState<CategoryId>(selectedCategory);
+
+  const activeProg = categoryProgressMap[activeCat] || {
+    currentLevel: 1,
+    clearCountInLevel: 0,
+    levelClears: {},
+    maxUnlockedLevel: 1,
+    isTested: false,
+    totalClearedBoards: 0,
   };
 
-  // Calculate total cleared words across all levels
-  let totalSolvedWords = 0;
-  for (let l = 1; l <= 10; l++) {
-    const clears = levelClears[l] || 0;
-    totalSolvedWords += clears * (levelNames[l]?.words || 10);
+  const catMeta = getCategoryMeta(activeCat);
+
+  // Overall stats
+  let totalAllBoardsCleared = 0;
+  for (const cat of Object.keys(categoryProgressMap) as CategoryId[]) {
+    totalAllBoardsCleared += categoryProgressMap[cat]?.totalClearedBoards || 0;
   }
 
-  // Calculate fastest clear record
-  const bestRecord = boardRecords.length > 0
-    ? [...boardRecords].sort((a, b) => a.timeSeconds - b.timeSeconds)[0]
-    : null;
+  // Filter records for active category
+  const catRecords = boardRecords.filter(
+    (r) => !r.category || r.category === activeCat
+  );
+
+  const bestRecord =
+    catRecords.length > 0
+      ? [...catRecords].sort((a, b) => a.timeSeconds - b.timeSeconds)[0]
+      : null;
 
   const formatTime = (sec: number = 0) => {
     const m = Math.floor(sec / 60);
@@ -50,41 +58,79 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
     return `${m}분 ${String(s).padStart(2, '0')}초`;
   };
 
+  const masterStatus = isCategoryMasterEligible(activeCat, activeProg);
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-4 pb-28 animate-in fade-in duration-200">
       {/* 1. Header Overview Cards */}
       <div className="text-center mb-5">
         <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
           <Trophy className="w-6 h-6 text-amber-500" />
-          <span>내 낱말퍼즐 기록실</span>
+          <span>내 지식 탐구 기록실</span>
         </h2>
         <p className="text-xs text-slate-500 mt-1">
-          완성한 지식 어휘와 분야별 관문 돌파 기록을 한눈에 확인하세요.
+          8대 분야별 관문 돌파 현황과 공식 마스터 인증서 발급 자격을 확인하세요.
         </p>
       </div>
 
-      {/* Stats Summary Grid */}
+      {/* Category Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4">
+        {CATEGORIES_REGISTRY.map((cat) => {
+          const isSelected = activeCat === cat.id;
+          const prog = categoryProgressMap[cat.id];
+          const cleared = prog?.totalClearedBoards || 0;
+
+          return (
+            <button
+              key={cat.id}
+              onClick={() => {
+                sounds.playKey();
+                setActiveCat(cat.id);
+              }}
+              className={`px-3 py-2 rounded-2xl border text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                isSelected
+                  ? 'bg-[#0288d1] text-white border-[#0288d1] shadow-xs'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+            >
+              <span>{cat.icon}</span>
+              <span>{cat.name}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {cleared}/30
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Stats Summary Grid for Active Category */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <div className="p-4 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center text-center">
-          <span className="text-[11px] font-bold text-slate-500">총 완성 단어</span>
-          <span className="text-2xl font-black text-[#0288d1] mt-1">
-            {totalSolvedWords}
-            <span className="text-xs font-bold text-slate-500 ml-1">개</span>
+          <span className="text-[11px] font-bold text-slate-500">
+            {catMeta.name} 돌파 관문
+          </span>
+          <span className="text-2xl font-black text-[#0288d1] mt-1 font-mono">
+            {activeProg.totalClearedBoards}
+            <span className="text-xs font-bold text-slate-500 ml-1">/ 30관문</span>
           </span>
         </div>
 
         <div className="p-4 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center text-center">
-          <span className="text-[11px] font-bold text-slate-500">돌파한 관문</span>
-          <span className="text-2xl font-black text-emerald-600 mt-1">
-            {maxUnlockedLevel}
+          <span className="text-[11px] font-bold text-slate-500">최고 해금 레벨</span>
+          <span className="text-2xl font-black text-emerald-600 mt-1 font-mono">
+            Lv.{activeProg.maxUnlockedLevel}
             <span className="text-xs font-bold text-slate-500 ml-1">/ 10</span>
           </span>
         </div>
 
         <div className="p-4 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center text-center">
-          <span className="text-[11px] font-bold text-slate-500">클리어한 판 수</span>
-          <span className="text-2xl font-black text-amber-500 mt-1">
-            {boardRecords.length}
+          <span className="text-[11px] font-bold text-slate-500">전체 누적 완료</span>
+          <span className="text-2xl font-black text-amber-500 mt-1 font-mono">
+            {totalAllBoardsCleared}
             <span className="text-xs font-bold text-slate-500 ml-1">판</span>
           </span>
         </div>
@@ -97,153 +143,151 @@ export const RecordsView: React.FC<RecordsViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Gate Progress Grid (Lv.1 ~ Lv.10) */}
+      {/* Master Certificate Banner for this Category */}
+      <div className="w-full bg-gradient-to-r from-amber-50 via-white to-amber-50/40 rounded-3xl p-5 border border-amber-200 shadow-xs mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl shrink-0 shadow-2xs">
+            🎓
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-black text-slate-900">
+                대한민국 {catMeta.name} 마스터 인증서
+              </h3>
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  masterStatus.eligible
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-100/70 text-amber-800 border-amber-300'
+                }`}
+              >
+                {masterStatus.eligible ? '수여 자격 획득' : `30개 중 ${masterStatus.clearedBoards}개 완료`}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {masterStatus.eligible
+                ? `${catMeta.name} 전 10개 레벨 30개 관문을 정복하셨습니다! 인증서를 열람하고 PDF로 저장하세요.`
+                : `${masterStatus.remainingBoards}개 관문을 더 통과하면 공식 마스터 인증서가 수여됩니다.`}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            sounds.playKey();
+            onOpenCertificate(activeCat);
+          }}
+          className={`px-4 py-2.5 rounded-xl font-black text-xs shadow-xs transition flex items-center justify-center gap-1.5 shrink-0 ${
+            masterStatus.eligible
+              ? 'bg-amber-500 hover:bg-amber-600 text-white'
+              : 'bg-slate-800 hover:bg-slate-900 text-white'
+          }`}
+        >
+          <Award className="w-4 h-4" />
+          <span>{masterStatus.eligible ? '마스터 인증서 보기' : '인증서 도전 현황'}</span>
+        </button>
+      </div>
+
+      {/* 2. Gate Progress Grid (Lv.1 ~ Lv.10) for Selected Category */}
       <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
             <Award className="w-5 h-5 text-[#0288d1]" />
-            <span>레벨별 관문 돌파 현황 (3판 클리어 승급)</span>
+            <span>
+              {catMeta.name} 레벨별 관문 돌파 현황 (각 레벨 3관문 돌파)
+            </span>
           </h3>
-          <span className="text-xs font-bold text-slate-500">
-            현재 도전: Lv.{currentLevel}
-          </span>
+
+          <button
+            onClick={() => {
+              sounds.playKey();
+              onSelectCategory(activeCat);
+              onGoToPlay();
+            }}
+            className="px-3.5 py-1.5 bg-[#0288d1] hover:bg-[#0277bd] text-white text-xs font-black rounded-xl shadow-xs transition flex items-center gap-1"
+          >
+            <span>이 분야 도전하기</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((lvl) => {
-            const clears = levelClears[lvl] || 0;
+            const clears = activeProg.levelClears[lvl] || 0;
             const isCompleted = clears >= 3;
-            const isUnlocked = lvl <= maxUnlockedLevel;
-            const detail = levelNames[lvl];
+            const isUnlocked = lvl <= activeProg.maxUnlockedLevel;
 
             return (
               <div
                 key={lvl}
                 className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
                   isCompleted
-                    ? 'bg-emerald-50/80 border-emerald-300'
+                    ? 'bg-emerald-50/50 border-emerald-200'
                     : isUnlocked
-                    ? 'bg-white border-slate-200'
-                    : 'bg-slate-50/80 border-slate-200 opacity-60'
+                    ? 'bg-sky-50/50 border-sky-200'
+                    : 'bg-slate-50 border-slate-200/60 opacity-60'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
                       isCompleted
-                        ? 'bg-emerald-500 text-white'
+                        ? 'bg-emerald-500 text-white shadow-xs'
                         : isUnlocked
-                        ? 'bg-[#0288d1] text-white'
+                        ? 'bg-[#0288d1] text-white shadow-xs'
                         : 'bg-slate-300 text-slate-500'
                     }`}
                   >
-                    {isCompleted ? '✓' : `L${lvl}`}
+                    {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : !isUnlocked ? <Lock className="w-4 h-4" /> : lvl}
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-sm text-slate-800">
-                        Lv.{lvl} {detail.name}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-black text-slate-800">
+                        {catMeta.name} {lvl}단계
                       </span>
-                      <span className="text-[10px] px-1.5 py-0.2 bg-slate-100 rounded-md text-slate-500 font-bold">
-                        {detail.words}단어
+                      <span className="text-[10px] text-slate-400 font-bold">
+                        {lvl <= 3 ? '초급 (8x8)' : lvl <= 7 ? '중급 (10x10)' : '전문가 (12x12)'}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-500">
-                      {isCompleted
-                        ? '관문 완전 돌파 (3/3판 완료)'
-                        : isUnlocked
-                        ? `도전 중 (${clears}/3판 완료)`
-                        : '이전 관문 클리어 필요 (잠김)'}
-                    </span>
+
+                    <div className="flex items-center gap-1 mt-1">
+                      {[1, 2, 3].map((gate) => (
+                        <span
+                          key={gate}
+                          className={`w-4 h-1.5 rounded-full ${
+                            clears >= gate
+                              ? 'bg-emerald-500'
+                              : isUnlocked
+                              ? 'bg-slate-300'
+                              : 'bg-slate-200'
+                          }`}
+                        />
+                      ))}
+                      <span className="text-[10px] text-slate-400 font-bold ml-1">
+                        {clears} / 3관문
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Progress 3 Dots */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {[1, 2, 3].map((step) => (
-                    <div
-                      key={step}
-                      className={`w-2.5 h-2.5 rounded-full ${
-                        clears >= step
-                          ? 'bg-emerald-500 ring-2 ring-emerald-200'
-                          : isUnlocked
-                          ? 'bg-slate-200'
-                          : 'bg-slate-200 opacity-40'
-                      }`}
-                    />
-                  ))}
+                <div>
+                  {isCompleted ? (
+                    <span className="text-[10px] font-black text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                      완료
+                    </span>
+                  ) : isUnlocked ? (
+                    <span className="text-[10px] font-black text-[#0288d1] bg-sky-100 px-2 py-0.5 rounded-full">
+                      도전 가능
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-slate-400">잠김</span>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
-
-      {/* 3. Recent Clears Timeline */}
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 p-5 shadow-sm">
-        <h3 className="text-base font-black text-slate-800 flex items-center gap-2 mb-3">
-          <Clock className="w-5 h-5 text-amber-500" />
-          <span>최근 클리어 히스토리</span>
-        </h3>
-
-        {boardRecords.length === 0 ? (
-          <div className="py-8 text-center text-slate-400">
-            <p className="text-sm font-bold">아직 클리어한 퍼즐 기록이 없습니다.</p>
-            <p className="text-xs mt-1">지금 바로 첫 번째 낱말 퍼즐을 완성해보세요!</p>
-            <button
-              onClick={() => {
-                sounds.playKey();
-                onGoToPlay();
-              }}
-              className="mt-4 px-5 py-2.5 bg-[#0288d1] hover:bg-[#0277bd] text-white font-black text-xs rounded-xl shadow-md transition"
-            >
-              퍼즐 도전하러 가기 ➔
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {boardRecords.slice(0, 10).map((rec, idx) => {
-              const catMeta = rec.category ? getCategoryMeta(rec.category) : null;
-              return (
-                <div
-                  key={rec.id || idx}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-lg bg-sky-100 text-[#0288d1] font-black flex items-center justify-center text-[11px]">
-                      #{idx + 1}
-                    </span>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        {catMeta && (
-                          <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-white border border-slate-200 text-slate-700">
-                            {catMeta.icon} {catMeta.name}
-                          </span>
-                        )}
-                        <span className="font-bold text-slate-800">
-                          Lv.{rec.level} {levelNames[rec.level]?.name || ''} 제{rec.boardNumber}판
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-slate-500">
-                        ({rec.wordCount}단어)
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                      ⏱️ {formatTime(rec.timeSeconds)}
-                    </span>
-                    <span className="text-[10px] text-slate-400 hidden sm:inline">
-                      {new Date(rec.date).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );
