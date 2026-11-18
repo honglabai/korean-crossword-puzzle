@@ -53,7 +53,7 @@
     <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin />
     <link rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
 
-    <!-- Google AdSense Account Verification Meta Tag & Performance-Optimized Loader -->
+    <!-- Google AdSense Account Verification Meta Tag & Interaction-Driven Lazy Loader -->
     <meta name="google-adsense-account" content="ca-pub-8675047967209162" />
     <script>
       (function() {
@@ -61,21 +61,27 @@
         function loadAdSense() {
           if (adsLoaded) return;
           adsLoaded = true;
+          window.removeEventListener('scroll', loadAdSense, { passive: true });
+          window.removeEventListener('touchstart', loadAdSense, { passive: true });
+          window.removeEventListener('mousemove', loadAdSense, { passive: true });
+          window.removeEventListener('click', loadAdSense, { passive: true });
+          window.removeEventListener('keydown', loadAdSense, { passive: true });
+
           var s = document.createElement('script');
           s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8675047967209162';
           s.async = true;
           s.crossOrigin = 'anonymous';
           document.head.appendChild(s);
         }
-        if ('requestIdleCallback' in window) {
-          window.addEventListener('load', function() {
-            window.requestIdleCallback(loadAdSense, { timeout: 2500 });
-          });
-        } else {
-          window.addEventListener('load', function() {
-            setTimeout(loadAdSense, 1000);
-          });
-        }
+
+        window.addEventListener('scroll', loadAdSense, { passive: true, once: true });
+        window.addEventListener('touchstart', loadAdSense, { passive: true, once: true });
+        window.addEventListener('mousemove', loadAdSense, { passive: true, once: true });
+        window.addEventListener('click', loadAdSense, { passive: true, once: true });
+        window.addEventListener('keydown', loadAdSense, { passive: true, once: true });
+
+        // Fallback: load after 4.5 seconds for idle users and crawlers
+        setTimeout(loadAdSense, 4500);
       })();
     </script>
 

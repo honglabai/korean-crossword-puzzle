@@ -11,9 +11,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          if (id.includes('node_modules/lucide-react')) {
-            return 'lucide';
-          }
           if (id.includes('node_modules/canvas-confetti')) {
             return 'confetti';
           }
@@ -21,7 +18,7 @@ export default defineConfig({
             const match = id.match(/boards\/([a-zA-Z]+)\.json/);
             if (match) return `board-${match[1]}`;
           }
-          if (id.includes('src/data/categories/')) {
+          if (id.includes('src/data/dictionaries') || id.includes('src/data/categories/')) {
             return 'dictionaries';
           }
         },
