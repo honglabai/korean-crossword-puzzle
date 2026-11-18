@@ -65,7 +65,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 sm:px-1 rounded-xl transition-all duration-150 relative cursor-pointer ${
                 isActive
                   ? 'text-[#0288d1] font-black'
-                  : 'text-slate-400 hover:text-slate-600 font-bold'
+                  : 'text-slate-600 hover:text-slate-800 font-bold'
               }`}
             >
               {/* Active Pill Indicator */}
@@ -78,13 +78,13 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                   isActive ? 'bg-sky-50 scale-105 shadow-2xs' : 'bg-transparent'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-[#0288d1]' : 'text-slate-400'}`} />
+                <Icon className={`w-5 h-5 ${isActive ? 'text-[#0288d1]' : 'text-slate-500'}`} />
               </div>
 
               <span className="text-[11px] leading-tight mt-0.5 tracking-tight font-black">
                 {tab.label}
               </span>
-              <span className="text-[9px] text-slate-400 leading-none hidden sm:block mt-0.5 font-medium">
+              <span className="text-[9px] text-slate-500 leading-none hidden sm:block mt-0.5 font-bold">
                 {tab.subtitle}
               </span>
             </button>

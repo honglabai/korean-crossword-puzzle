@@ -1,12 +1,4 @@
-import { CategoryId, CategoryMeta, WordItem, DiagnosticQuestion } from '../types/puzzle';
-import { POLITICS_WORDS, POLITICS_QUESTIONS } from './categories/politics';
-import { SOCIETY_WORDS, SOCIETY_QUESTIONS } from './categories/society';
-import { CULTURE_WORDS, CULTURE_QUESTIONS } from './categories/culture';
-import { SPORTS_WORDS, SPORTS_QUESTIONS } from './categories/sports';
-import { KOREAN_HISTORY_WORDS, KOREAN_HISTORY_QUESTIONS } from './categories/koreanHistory';
-import { WORLD_HISTORY_WORDS, WORLD_HISTORY_QUESTIONS } from './categories/worldHistory';
-import { MUSIC_WORDS, MUSIC_QUESTIONS } from './categories/music';
-import { ART_WORDS, ART_QUESTIONS } from './categories/art';
+import { CategoryId, CategoryMeta } from '../types/puzzle';
 
 export const CATEGORIES_META: CategoryMeta[] = [
   {
@@ -105,61 +97,8 @@ export function getCategoryMeta(id: CategoryId): CategoryMeta {
   return CATEGORY_MAP[id] || CATEGORIES_META[0];
 }
 
-export function getDictionaryForCategory(category: CategoryId): WordItem[] {
-  switch (category) {
-    case 'POLITICS':
-      return POLITICS_WORDS;
-    case 'SOCIETY':
-      return SOCIETY_WORDS;
-    case 'CULTURE':
-      return CULTURE_WORDS;
-    case 'SPORTS':
-      return SPORTS_WORDS;
-    case 'KOREAN_HISTORY':
-      return KOREAN_HISTORY_WORDS;
-    case 'WORLD_HISTORY':
-      return WORLD_HISTORY_WORDS;
-    case 'MUSIC':
-      return MUSIC_WORDS;
-    case 'ART':
-      return ART_WORDS;
-    default:
-      return POLITICS_WORDS;
-  }
-}
-
-export function getDiagnosticQuestionsForCategory(category: CategoryId): DiagnosticQuestion[] {
-  switch (category) {
-    case 'POLITICS':
-      return POLITICS_QUESTIONS;
-    case 'SOCIETY':
-      return SOCIETY_QUESTIONS;
-    case 'CULTURE':
-      return CULTURE_QUESTIONS;
-    case 'SPORTS':
-      return SPORTS_QUESTIONS;
-    case 'KOREAN_HISTORY':
-      return KOREAN_HISTORY_QUESTIONS;
-    case 'WORLD_HISTORY':
-      return WORLD_HISTORY_QUESTIONS;
-    case 'MUSIC':
-      return MUSIC_QUESTIONS;
-    case 'ART':
-      return ART_QUESTIONS;
-    default:
-      return POLITICS_QUESTIONS;
-  }
-}
-
-export function getAllCategoriesWords(): WordItem[] {
-  return [
-    ...POLITICS_WORDS,
-    ...SOCIETY_WORDS,
-    ...CULTURE_WORDS,
-    ...SPORTS_WORDS,
-    ...KOREAN_HISTORY_WORDS,
-    ...WORLD_HISTORY_WORDS,
-    ...MUSIC_WORDS,
-    ...ART_WORDS,
-  ];
-}
+export {
+  getDictionaryForCategory,
+  getDiagnosticQuestionsForCategory,
+  getAllCategoriesWords,
+} from './dictionaries';

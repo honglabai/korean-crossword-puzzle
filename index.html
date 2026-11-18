@@ -47,9 +47,37 @@
     <meta name="twitter:description" content="8대 지식 영역 2,480개 어휘 기반 가로세로 낱말퍼즐 및 심층 교양 백과사전 웹 애플리케이션." />
     <meta name="twitter:image" content="https://crossword.honglabai.com/og-image.png" />
 
-    <!-- Google AdSense Account Verification Meta Tag & Script -->
+    <!-- Preconnect & DNS-prefetch to Google AdSense / Doubleclick -->
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
+    <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+    <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin />
+    <link rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
+
+    <!-- Google AdSense Account Verification Meta Tag & Performance-Optimized Loader -->
     <meta name="google-adsense-account" content="ca-pub-8675047967209162" />
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8675047967209162" crossorigin="anonymous"></script>
+    <script>
+      (function() {
+        var adsLoaded = false;
+        function loadAdSense() {
+          if (adsLoaded) return;
+          adsLoaded = true;
+          var s = document.createElement('script');
+          s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8675047967209162';
+          s.async = true;
+          s.crossOrigin = 'anonymous';
+          document.head.appendChild(s);
+        }
+        if ('requestIdleCallback' in window) {
+          window.addEventListener('load', function() {
+            window.requestIdleCallback(loadAdSense, { timeout: 2500 });
+          });
+        } else {
+          window.addEventListener('load', function() {
+            setTimeout(loadAdSense, 1000);
+          });
+        }
+      })();
+    </script>
 
     <!-- Structured Data (JSON-LD Schema.org) for Google & Naver Search Engines -->
     <script type="application/ld+json">
@@ -89,13 +117,16 @@
     </script>
   </head>
   <body>
+    <!-- Skip to main content landmark for accessibility (WCAG 2.1) -->
+    <a href="#main-content" style="position: absolute; left: -9999px; top: 0; padding: 8px 16px; background: #0288d1; color: white; font-weight: bold; z-index: 100;" onfocus="this.style.left='8px'; this.style.top='8px';">본문 바로가기</a>
+
     <!-- 
       SEO Pre-rendered Semantic HTML for Googlebot and Naver Search Advisor (Yeti):
       This static content inside #root ensures search engine crawlers index complete textual articles,
       headings, keyword structures, and FAQs before React mounts into #root!
     -->
     <div id="root">
-      <div style="max-width: 960px; margin: 0 auto; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #1e293b; line-height: 1.7;">
+      <main id="main-content" role="main" style="max-width: 960px; margin: 0 auto; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #1e293b; line-height: 1.7;">
         <header style="border-bottom: 2px solid #0288d1; padding-bottom: 20px; margin-bottom: 24px;">
           <h1 style="color: #0288d1; font-size: 28px; margin-bottom: 8px; font-weight: 800;">
             가로세로 낱말퍼즐 - 8대 영역 십자말풀이 &amp; 상식 지식 백과사전
@@ -226,7 +257,7 @@
         <footer style="border-top: 1px solid #cbd5e1; padding-top: 16px; font-size: 13px; color: #64748b;">
           <p>서비스 문의: honglabai@gmail.com | 개인정보처리방침 &amp; 이용약관 준수 | © 2026 가로세로 낱말퍼즐. All rights reserved.</p>
         </footer>
-      </div>
+      </main>
     </div>
 
     <section aria-labelledby="crossword-information" style="max-width: 960px; margin: 24px auto; padding: 20px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #1e293b; line-height: 1.7; border-top: 1px solid #e2e8f0;">

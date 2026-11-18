@@ -75,7 +75,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto px-4 py-4 space-y-4 animate-in fade-in duration-200">
+    <main
+      id="main-content"
+      role="main"
+      className="w-full max-w-xl mx-auto px-4 py-4 space-y-4 animate-in fade-in duration-200"
+    >
       {/* 1. Header Hero Card: Daily Crossword Banner */}
       <section
         aria-label="오늘의 낱말퍼즐"
@@ -142,7 +146,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 {getCategoryMeta(recentActive.category).name} Lv.{recentActive.session.level} · 제
                 {recentActive.session.boardNumber}관문
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-600 font-medium">
                 풀이 시간 {Math.floor(recentActive.session.elapsedSeconds / 60)}분{' '}
                 {recentActive.session.elapsedSeconds % 60}초 저장됨
               </p>
@@ -169,7 +173,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <Sparkles className="w-4 h-4 text-sky-600" />
             <span>지식 분야 선택</span>
           </h3>
-          <span className="text-xs text-slate-400 font-semibold">8대 지식 영역</span>
+          <span className="text-xs text-slate-600 font-bold">8대 지식 영역</span>
         </div>
 
         <div className="grid grid-cols-4 gap-2">
@@ -191,7 +195,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     : 'bg-white border-slate-200 hover:border-sky-300 hover:bg-slate-50/60'
                 }`}
               >
-                <span className="text-[10px] font-black text-slate-400 mb-0.5">
+                <span className="text-[10px] font-black text-slate-600 mb-0.5">
                   {String(idx + 1).padStart(2, '0')}
                 </span>
                 <span className="text-2xl mb-1 select-none">{cat.icon}</span>
@@ -221,35 +225,35 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               sounds.playKey();
               onNavigateTab('RECORDS');
             }}
-            className="text-xs text-sky-600 font-bold hover:underline flex items-center gap-0.5"
+            className="text-xs text-sky-700 font-bold hover:underline flex items-center gap-0.5"
           >
             <span>상세 기록</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5 text-sky-700" />
           </button>
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-[11px] text-slate-400 font-bold block mb-1">완료 퍼즐</span>
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span className="text-[11px] text-slate-600 font-bold block mb-1">완료 퍼즐</span>
             <span className="text-lg font-black text-slate-800 font-mono">
               {totalClearedPuzzles}
-              <span className="text-xs font-bold text-slate-500 ml-0.5">판</span>
+              <span className="text-xs font-bold text-slate-600 ml-0.5">판</span>
             </span>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-[11px] text-slate-400 font-bold block mb-1">학습 단어</span>
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span className="text-[11px] text-slate-600 font-bold block mb-1">학습 단어</span>
             <span className="text-lg font-black text-[#0288d1] font-mono">
               {learnedWordsCount}
-              <span className="text-xs font-bold text-slate-500 ml-0.5">개</span>
+              <span className="text-xs font-bold text-slate-600 ml-0.5">개</span>
             </span>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-[11px] text-slate-400 font-bold block mb-1">연속 출석</span>
-            <span className="text-lg font-black text-amber-600 font-mono">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span className="text-[11px] text-slate-600 font-bold block mb-1">연속 출석</span>
+            <span className="text-lg font-black text-amber-700 font-mono">
               {streakDays}
-              <span className="text-xs font-bold text-slate-500 ml-0.5">일</span>
+              <span className="text-xs font-bold text-slate-600 ml-0.5">일</span>
             </span>
           </div>
         </div>
@@ -277,7 +281,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-600 mt-0.5 font-medium">
               틀렸거나 힌트를 사용한 단어를 모아 퀴즈와 단어 카드로 복습해보세요.
             </p>
           </div>
@@ -300,6 +304,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <span>{copied ? '링크가 복사되었습니다!' : '친구에게 앱 공유하기'}</span>
         </button>
       </section>
-    </div>
+    </main>
   );
 };

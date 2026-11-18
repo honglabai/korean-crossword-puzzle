@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { BoardData, Direction, PlacedWord, BoardRecord, CategoryId } from './types/puzzle';
 import { ThemeId, THEMES, getDefaultThemeForLevel } from './types/theme';
 import { getCategoryMeta } from './data/categoryRegistry';
@@ -8,30 +8,18 @@ import { sounds } from './utils/audio';
 import { combineHangulInput, decompose, compose } from './utils/hangul';
 import { WorkbookHeader } from './components/WorkbookHeader';
 import { CategoryLevelBar } from './components/CategoryLevelBar';
-import { CategorySelectorModal } from './components/CategorySelectorModal';
 import { CrosswordBoard } from './components/CrosswordBoard';
 import { ActiveClueCard } from './components/ActiveClueCard';
 import { CluesList } from './components/CluesList';
 import { GameControls } from './components/GameControls';
 import { VirtualHangulKeypad } from './components/VirtualHangulKeypad';
-import { ChosungHintModal } from './components/ChosungHintModal';
-import { RewardedAdModal } from './components/RewardedAdModal';
-import { PoliticsPlacementTest } from './components/PoliticsPlacementTest';
-import { LevelUpModal } from './components/LevelUpModal';
-import { MasterCertificate } from './components/MasterCertificate';
 import { BottomNavBar, TabType } from './components/BottomNavBar';
-import { RecordsView } from './components/RecordsView';
-import { MyPageView } from './components/MyPageView';
-import { LegalPolicyModal, PolicyTab } from './components/LegalPolicyModal';
+import { PolicyTab } from './components/LegalPolicyModal';
 import { SiteFooter } from './components/SiteFooter';
 import { AdBannerSlot } from './components/AdBannerSlot';
 import { PuzzleStageKnowledgeGuide } from './components/PuzzleStageKnowledgeGuide';
-import { InstallAppModal } from './components/InstallAppModal';
 import { usePWAInstall } from './utils/usePWAInstall';
 import { HomeScreen } from './features/home/HomeScreen';
-import { KnowledgeHubView } from './features/learning/KnowledgeHubView';
-import { DailyChallengeModal } from './features/daily/DailyChallengeModal';
-import { AchievementsModal } from './features/achievements/AchievementsModal';
 import {
   loadUserSaveData,
   saveUserSaveData,
@@ -46,7 +34,47 @@ import {
 } from './services/storageService';
 import { getDailyBoard } from './services/dailyService';
 import { UserSaveData, FontSizeSetting, ActiveGameSession } from './types/progress';
-import confetti from 'canvas-confetti';
+
+// Code-split tabs and modals loaded lazily on demand
+const KnowledgeHubView = lazy(() =>
+  import('./features/learning/KnowledgeHubView').then((m) => ({ default: m.KnowledgeHubView }))
+);
+const RecordsView = lazy(() =>
+  import('./components/RecordsView').then((m) => ({ default: m.RecordsView }))
+);
+const MyPageView = lazy(() =>
+  import('./components/MyPageView').then((m) => ({ default: m.MyPageView }))
+);
+const DailyChallengeModal = lazy(() =>
+  import('./features/daily/DailyChallengeModal').then((m) => ({ default: m.DailyChallengeModal }))
+);
+const AchievementsModal = lazy(() =>
+  import('./features/achievements/AchievementsModal').then((m) => ({ default: m.AchievementsModal }))
+);
+const MasterCertificate = lazy(() =>
+  import('./components/MasterCertificate').then((m) => ({ default: m.MasterCertificate }))
+);
+const PoliticsPlacementTest = lazy(() =>
+  import('./components/PoliticsPlacementTest').then((m) => ({ default: m.PoliticsPlacementTest }))
+);
+const RewardedAdModal = lazy(() =>
+  import('./components/RewardedAdModal').then((m) => ({ default: m.RewardedAdModal }))
+);
+const LevelUpModal = lazy(() =>
+  import('./components/LevelUpModal').then((m) => ({ default: m.LevelUpModal }))
+);
+const ChosungHintModal = lazy(() =>
+  import('./components/ChosungHintModal').then((m) => ({ default: m.ChosungHintModal }))
+);
+const CategorySelectorModal = lazy(() =>
+  import('./components/CategorySelectorModal').then((m) => ({ default: m.CategorySelectorModal }))
+);
+const LegalPolicyModal = lazy(() =>
+  import('./components/LegalPolicyModal').then((m) => ({ default: m.LegalPolicyModal }))
+);
+const InstallAppModal = lazy(() =>
+  import('./components/InstallAppModal').then((m) => ({ default: m.InstallAppModal }))
+);
 
 const getInitialCategory = (): CategoryId => {
   if (typeof window !== 'undefined') {
@@ -524,11 +552,13 @@ export function App() {
       if (!allCorrect) return;
 
       sounds.playVictory();
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 },
-      });
+      import('canvas-confetti').then((m) => {
+        m.default({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 },
+        });
+      }).catch(() => {});
 
       // Daily Challenge Completion
       if (isDailyChallengeActive) {
@@ -1128,95 +1158,101 @@ export function App() {
 
         {/* TAB 3: KNOWLEDGE */}
         {activeTab === 'KNOWLEDGE' && (
-          <KnowledgeHubView
-            selectedCategory={selectedCategory}
-            maxUnlockedLevel={maxUnlockedLevel}
-            solvedWordTerms={solvedWordTerms}
-            onSelectCategory={handleSelectCategory}
-            wrongWords={saveData.wrongWords}
-            onMarkMastered={(term) => {
-              const updated = saveData.wrongWords.map((w) =>
-                w.term === term ? { ...w, mastered: !w.mastered } : w
-              );
-              const nextData = { ...saveData, wrongWords: updated };
-              setSaveData(nextData);
-              saveUserSaveData(nextData);
-            }}
-            onClearMistake={(term) => {
-              const updated = saveData.wrongWords.filter((w) => w.term !== term);
-              const nextData = { ...saveData, wrongWords: updated };
-              setSaveData(nextData);
-              saveUserSaveData(nextData);
-            }}
-          />
+          <Suspense fallback={<div className="p-8 text-center text-slate-600 font-bold">지식 백과를 불러오는 중입니다...</div>}>
+            <KnowledgeHubView
+              selectedCategory={selectedCategory}
+              maxUnlockedLevel={maxUnlockedLevel}
+              solvedWordTerms={solvedWordTerms}
+              onSelectCategory={handleSelectCategory}
+              wrongWords={saveData.wrongWords}
+              onMarkMastered={(term) => {
+                const updated = saveData.wrongWords.map((w) =>
+                  w.term === term ? { ...w, mastered: !w.mastered } : w
+                );
+                const nextData = { ...saveData, wrongWords: updated };
+                setSaveData(nextData);
+                saveUserSaveData(nextData);
+              }}
+              onClearMistake={(term) => {
+                const updated = saveData.wrongWords.filter((w) => w.term !== term);
+                const nextData = { ...saveData, wrongWords: updated };
+                setSaveData(nextData);
+                saveUserSaveData(nextData);
+              }}
+            />
+          </Suspense>
         )}
 
         {/* TAB 4: RECORDS */}
         {activeTab === 'RECORDS' && (
-          <RecordsView
-            selectedCategory={selectedCategory}
-            categoryProgressMap={saveData.categoryProgress}
-            boardRecords={boardRecords}
-            onSelectCategory={handleSelectCategory}
-            onGoToPlay={() => {
-              setActiveTab('CHALLENGE');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenCertificate={(cat) => handleOpenCertificate(cat)}
-          />
+          <Suspense fallback={<div className="p-8 text-center text-slate-600 font-bold">학습 기록을 불러오는 중입니다...</div>}>
+            <RecordsView
+              selectedCategory={selectedCategory}
+              categoryProgressMap={saveData.categoryProgress}
+              boardRecords={boardRecords}
+              onSelectCategory={handleSelectCategory}
+              onGoToPlay={() => {
+                setActiveTab('CHALLENGE');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onOpenCertificate={(cat) => handleOpenCertificate(cat)}
+            />
+          </Suspense>
         )}
 
         {/* TAB 5: SETTINGS */}
         {activeTab === 'SETTINGS' && (
-          <MyPageView
-            currentLevel={currentLevel}
-            maxUnlockedLevel={maxUnlockedLevel}
-            hintBalance={hintBalance}
-            currentTheme={currentTheme}
-            isMuted={isMuted}
-            fontSize={saveData.settings.fontSize}
-            highContrast={saveData.settings.highContrast}
-            selectedCategory={selectedCategory}
-            categoryClears={currentCatProgress.levelClears}
-            totalClearedBoards={currentCatProgress.totalClearedBoards}
-            unlockedAchievementsCount={saveData.achievements.filter((a) => a.unlockedAt !== null).length}
-            totalAchievementsCount={saveData.achievements.length}
-            onSelectCategory={handleSelectCategory}
-            onSelectTheme={(themeId) => {
-              setUserThemeId(themeId);
-              const nextData = {
-                ...saveData,
-                settings: { ...saveData.settings, themeId },
-              };
-              setSaveData(nextData);
-              saveUserSaveData(nextData);
-            }}
-            onToggleSound={() => {
-              const nextMuted = !isMuted;
-              sounds.isMuted = nextMuted;
-              setIsMuted(nextMuted);
-              const nextData = {
-                ...saveData,
-                settings: { ...saveData.settings, isMuted: nextMuted },
-              };
-              setSaveData(nextData);
-              saveUserSaveData(nextData);
-            }}
-            onChangeFontSize={handleChangeFontSize}
-            onToggleHighContrast={handleToggleHighContrast}
-            onOpenTest={() => setIsPlacementTestOpen(true)}
-            onOpenAdModal={() => setIsAdModalOpen(true)}
-            onOpenCertificate={() => handleOpenCertificate(selectedCategory)}
-            onOpenAchievements={() => setIsAchievementsModalOpen(true)}
-            onOpenInstallModal={() => setIsInstallModalOpen(true)}
-            onOpenPolicy={handleOpenPolicy}
-            onResetProgress={handleResetProgress}
-            onDataRestored={() => {
-              const refreshed = loadUserSaveData();
-              setSaveData(refreshed);
-              loadBoard(refreshed.categoryProgress[refreshed.selectedCategory]?.currentLevel || 1, 1, refreshed.selectedCategory);
-            }}
-          />
+          <Suspense fallback={<div className="p-8 text-center text-slate-600 font-bold">설정을 불러오는 중입니다...</div>}>
+            <MyPageView
+              currentLevel={currentLevel}
+              maxUnlockedLevel={maxUnlockedLevel}
+              hintBalance={hintBalance}
+              currentTheme={currentTheme}
+              isMuted={isMuted}
+              fontSize={saveData.settings.fontSize}
+              highContrast={saveData.settings.highContrast}
+              selectedCategory={selectedCategory}
+              categoryClears={currentCatProgress.levelClears}
+              totalClearedBoards={currentCatProgress.totalClearedBoards}
+              unlockedAchievementsCount={saveData.achievements.filter((a) => a.unlockedAt !== null).length}
+              totalAchievementsCount={saveData.achievements.length}
+              onSelectCategory={handleSelectCategory}
+              onSelectTheme={(themeId) => {
+                setUserThemeId(themeId);
+                const nextData = {
+                  ...saveData,
+                  settings: { ...saveData.settings, themeId },
+                };
+                setSaveData(nextData);
+                saveUserSaveData(nextData);
+              }}
+              onToggleSound={() => {
+                const nextMuted = !isMuted;
+                sounds.isMuted = nextMuted;
+                setIsMuted(nextMuted);
+                const nextData = {
+                  ...saveData,
+                  settings: { ...saveData.settings, isMuted: nextMuted },
+                };
+                setSaveData(nextData);
+                saveUserSaveData(nextData);
+              }}
+              onChangeFontSize={handleChangeFontSize}
+              onToggleHighContrast={handleToggleHighContrast}
+              onOpenTest={() => setIsPlacementTestOpen(true)}
+              onOpenAdModal={() => setIsAdModalOpen(true)}
+              onOpenCertificate={() => handleOpenCertificate(selectedCategory)}
+              onOpenAchievements={() => setIsAchievementsModalOpen(true)}
+              onOpenInstallModal={() => setIsInstallModalOpen(true)}
+              onOpenPolicy={handleOpenPolicy}
+              onResetProgress={handleResetProgress}
+              onDataRestored={() => {
+                const refreshed = loadUserSaveData();
+                setSaveData(refreshed);
+                loadBoard(refreshed.categoryProgress[refreshed.selectedCategory]?.currentLevel || 1, 1, refreshed.selectedCategory);
+              }}
+            />
+          </Suspense>
         )}
 
         {/* Google AdSense Responsive Banner Slot */}
@@ -1238,100 +1274,123 @@ export function App() {
         unlockedLevel={maxUnlockedLevel}
       />
 
-      {/* Category Selector Modal */}
-      <CategorySelectorModal
-        isOpen={isCategoryModalOpen}
-        selectedCategory={selectedCategory}
-        onSelectCategory={handleSelectCategory}
-        onClose={() => setIsCategoryModalOpen(false)}
-      />
+      {/* Lazily loaded modals with Suspense */}
+      <Suspense fallback={null}>
+        {/* Category Selector Modal */}
+        {isCategoryModalOpen && (
+          <CategorySelectorModal
+            isOpen={isCategoryModalOpen}
+            selectedCategory={selectedCategory}
+            onSelectCategory={handleSelectCategory}
+            onClose={() => setIsCategoryModalOpen(false)}
+          />
+        )}
 
-      {/* Placement Test Modal */}
-      <PoliticsPlacementTest
-        isOpen={isPlacementTestOpen}
-        selectedCategory={selectedCategory}
-        onClose={() => setIsPlacementTestOpen(false)}
-        onComplete={handleTestComplete}
-      />
+        {/* Placement Test Modal */}
+        {isPlacementTestOpen && (
+          <PoliticsPlacementTest
+            isOpen={isPlacementTestOpen}
+            selectedCategory={selectedCategory}
+            onClose={() => setIsPlacementTestOpen(false)}
+            onComplete={handleTestComplete}
+          />
+        )}
 
-      {/* Chosung Hint Modal */}
-      <ChosungHintModal
-        isOpen={isChosungModalOpen}
-        onClose={() => setIsChosungModalOpen(false)}
-        activeWord={activeWord}
-        hintBalance={hintBalance}
-        onApplyToBoard={handleApplyChosungToBoard}
-      />
+        {/* Chosung Hint Modal */}
+        {isChosungModalOpen && (
+          <ChosungHintModal
+            isOpen={isChosungModalOpen}
+            onClose={() => setIsChosungModalOpen(false)}
+            activeWord={activeWord}
+            hintBalance={hintBalance}
+            onApplyToBoard={handleApplyChosungToBoard}
+          />
+        )}
 
-      {/* Rewarded Ad Modal */}
-      <RewardedAdModal
-        isOpen={isAdModalOpen}
-        onClose={() => setIsAdModalOpen(false)}
-        onReward={handleAdReward}
-      />
+        {/* Rewarded Ad Modal */}
+        {isAdModalOpen && (
+          <RewardedAdModal
+            isOpen={isAdModalOpen}
+            onClose={() => setIsAdModalOpen(false)}
+            onReward={handleAdReward}
+          />
+        )}
 
-      {/* Level Up / Board Clear Modal */}
-      <LevelUpModal
-        isOpen={levelUpModal.isOpen}
-        type={levelUpModal.type}
-        currentLevel={currentLevel}
-        clearedBoardNumber={levelUpModal.clearedBoardNumber}
-        clearTimeSeconds={levelUpModal.clearTimeSeconds}
-        onNextBoard={handleNextBoard}
-        onNextLevel={handleNextLevel}
-        onOpenCertificate={() => {
-          setLevelUpModal((prev) => ({ ...prev, isOpen: false }));
-          handleOpenCertificate(selectedCategory);
-        }}
-      />
+        {/* Level Up / Board Clear Modal */}
+        {levelUpModal.isOpen && (
+          <LevelUpModal
+            isOpen={levelUpModal.isOpen}
+            type={levelUpModal.type}
+            currentLevel={currentLevel}
+            clearedBoardNumber={levelUpModal.clearedBoardNumber}
+            clearTimeSeconds={levelUpModal.clearTimeSeconds}
+            onNextBoard={handleNextBoard}
+            onNextLevel={handleNextLevel}
+            onOpenCertificate={() => {
+              setLevelUpModal((prev) => ({ ...prev, isOpen: false }));
+              handleOpenCertificate(selectedCategory);
+            }}
+          />
+        )}
 
-      {/* Master Certificate Modal */}
-      <MasterCertificate
-        isOpen={isCertificateOpen}
-        selectedCategory={certificateCategory}
-        defaultUserName={saveData.nickname}
-        isEligible={certEligibility.eligible}
-        clearedBoards={certEligibility.clearedBoards}
-        totalRequired={certEligibility.totalRequired}
-        onClose={() => setIsCertificateOpen(false)}
-        onContinueChallenge={() => {
-          setIsCertificateOpen(false);
-          handleSelectCategory(certificateCategory);
-          setActiveTab('CHALLENGE');
-        }}
-      />
+        {/* Master Certificate Modal */}
+        {isCertificateOpen && (
+          <MasterCertificate
+            isOpen={isCertificateOpen}
+            selectedCategory={certificateCategory}
+            defaultUserName={saveData.nickname}
+            isEligible={certEligibility.eligible}
+            clearedBoards={certEligibility.clearedBoards}
+            totalRequired={certEligibility.totalRequired}
+            onClose={() => setIsCertificateOpen(false)}
+            onContinueChallenge={() => {
+              setIsCertificateOpen(false);
+              handleSelectCategory(certificateCategory);
+              setActiveTab('CHALLENGE');
+            }}
+          />
+        )}
 
-      {/* Daily Challenge Modal */}
-      <DailyChallengeModal
-        isOpen={isDailyModalOpen}
-        onClose={() => setIsDailyModalOpen(false)}
-        saveData={saveData}
-        onStartDailyPuzzle={handleStartDailyChallenge}
-      />
+        {/* Daily Challenge Modal */}
+        {isDailyModalOpen && (
+          <DailyChallengeModal
+            isOpen={isDailyModalOpen}
+            onClose={() => setIsDailyModalOpen(false)}
+            saveData={saveData}
+            onStartDailyPuzzle={handleStartDailyChallenge}
+          />
+        )}
 
-      {/* Achievements Modal */}
-      <AchievementsModal
-        isOpen={isAchievementsModalOpen}
-        onClose={() => setIsAchievementsModalOpen(false)}
-        achievements={saveData.achievements}
-        onClaimReward={handleClaimAchievementReward}
-      />
+        {/* Achievements Modal */}
+        {isAchievementsModalOpen && (
+          <AchievementsModal
+            isOpen={isAchievementsModalOpen}
+            onClose={() => setIsAchievementsModalOpen(false)}
+            achievements={saveData.achievements}
+            onClaimReward={handleClaimAchievementReward}
+          />
+        )}
 
-      {/* Legal Policies Modal */}
-      <LegalPolicyModal
-        isOpen={isPolicyModalOpen}
-        initialTab={policyModalTab}
-        onClose={() => setIsPolicyModalOpen(false)}
-      />
+        {/* Legal Policies Modal */}
+        {isPolicyModalOpen && (
+          <LegalPolicyModal
+            isOpen={isPolicyModalOpen}
+            initialTab={policyModalTab}
+            onClose={() => setIsPolicyModalOpen(false)}
+          />
+        )}
 
-      {/* PWA App Install Modal */}
-      <InstallAppModal
-        isOpen={isInstallModalOpen}
-        onClose={() => setIsInstallModalOpen(false)}
-        onInstall={pwa.promptInstall}
-        isIOS={pwa.isIOS}
-        isInstalled={pwa.isInstalled}
-      />
+        {/* PWA App Install Modal */}
+        {isInstallModalOpen && (
+          <InstallAppModal
+            isOpen={isInstallModalOpen}
+            onClose={() => setIsInstallModalOpen(false)}
+            onInstall={pwa.promptInstall}
+            isIOS={pwa.isIOS}
+            isInstalled={pwa.isInstalled}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
