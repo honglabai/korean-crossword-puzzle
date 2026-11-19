@@ -183,14 +183,15 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                 } else if (isCharIncorrect) {
                   cellStyle = 'bg-rose-50 text-rose-700 border-2 border-rose-400 ring-2 ring-rose-400 shadow-md scale-[1.03] z-20';
                 } else {
-                  cellStyle = `${theme.focusedCell} z-20 scale-[1.03] shadow-md ring-2 ring-blue-500 border border-blue-400`;
+                  // User requested: warm light beige so cell never turns dark/grayish like black inactive cells
+                  cellStyle = 'bg-[#fef3c7] text-slate-900 border-2 border-amber-400 ring-2 ring-amber-300 shadow-md scale-[1.03] z-20';
                 }
               } else if (isCharCorrect) {
                 cellStyle = 'bg-emerald-50/95 text-emerald-800 border border-emerald-300 shadow-2xs hover:bg-emerald-100/70';
               } else if (isCharIncorrect) {
                 cellStyle = 'bg-rose-50/95 text-rose-600 border border-rose-300 shadow-2xs hover:bg-rose-100/70';
               } else if (inActiveWord) {
-                cellStyle = `${theme.activeWordHighlight} border border-amber-300/80 hover:bg-amber-100/90 shadow-2xs`;
+                cellStyle = 'bg-[#fffbeb] text-slate-800 border border-amber-200/90 hover:bg-amber-100/70 shadow-2xs';
               }
 
               const letterTextColor = isCharCorrect
@@ -203,7 +204,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                 ? 'caret-emerald-600 text-emerald-900'
                 : isCharIncorrect
                 ? 'caret-rose-600 text-rose-700'
-                : 'caret-blue-600 text-slate-900';
+                : 'caret-amber-600 text-slate-900';
 
               // Active cell: Direct in-cell text input
               return (
@@ -223,7 +224,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                           ? 'text-emerald-700/80'
                           : isCharIncorrect
                           ? 'text-rose-600/80'
-                          : theme.numberColor
+                          : theme?.numberColor || 'text-slate-700'
                       } ${getNumberFontSize()}`}
                     >
                       {cell.startNumberText}

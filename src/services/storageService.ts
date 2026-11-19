@@ -170,7 +170,7 @@ export function createDefaultSettings(): UserSettings {
   return {
     isMuted: false,
     fontSize: 'normal',
-    themeId: 'classic-blue',
+    themeId: 'classic',
     highContrast: false,
     learningMode: false, // Default challenge mode: unsolved words are masked in guide
   };
@@ -347,6 +347,10 @@ export function loadUserSaveData(): UserSaveData {
       settings: {
         ...createDefaultSettings(),
         ...(parsed.settings || {}),
+        themeId:
+          parsed.settings?.themeId === 'classic-blue'
+            ? 'classic'
+            : parsed.settings?.themeId || 'classic',
       },
       dailyChallenge: {
         lastPlayedDate: parsed.dailyChallenge?.lastPlayedDate || '',

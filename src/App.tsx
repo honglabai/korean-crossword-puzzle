@@ -323,7 +323,7 @@ export function App() {
               onSelectCategory={handleSelectCategory}
               onOpenCertificate={handleOpenCertificate}
               fontSize={saveData.settings.fontSize}
-              userThemeId={(saveData.settings.themeId as ThemeId) || 'classic-blue'}
+              userThemeId={(saveData.settings.themeId as ThemeId) || 'classic'}
               customDailyBoard={customDailyBoard}
               onClearCustomDailyBoard={() => setCustomDailyBoard(null)}
               onTimerTick={(sec, running) => {

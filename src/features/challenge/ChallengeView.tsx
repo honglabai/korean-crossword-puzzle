@@ -154,8 +154,12 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
   });
 
   // Theme
-  const levelTheme = useMemo(() => getDefaultThemeForLevel(currentLevel), [currentLevel]);
-  const currentTheme = THEMES[userThemeId] || levelTheme;
+  const levelThemeId = useMemo(() => getDefaultThemeForLevel(currentLevel), [currentLevel]);
+  const currentTheme =
+    THEMES[userThemeId as ThemeId] ||
+    (userThemeId === ('classic-blue' as any) ? THEMES.classic : undefined) ||
+    THEMES[levelThemeId] ||
+    THEMES.classic;
 
   // Active word reference
   const activeWord = useMemo(() => {

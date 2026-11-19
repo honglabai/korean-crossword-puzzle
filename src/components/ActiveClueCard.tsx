@@ -72,7 +72,7 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
       <div className="flex items-center justify-between gap-1.5 mb-1.5 pb-1 border-b border-slate-100 flex-wrap">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Circled Number */}
-          <span className={`font-black ${theme.numberColor} ${isLargeFont ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'}`}>
+          <span className={`font-black ${theme?.numberColor || 'text-slate-800'} ${isLargeFont ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'}`}>
             {activeWord.clueNumberText}
           </span>
 
