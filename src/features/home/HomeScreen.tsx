@@ -176,8 +176,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <span className="text-xs text-slate-600 font-bold">8대 지식 영역</span>
         </div>
 
-        <div className="grid grid-cols-4 gap-2">
-          {CATEGORIES_REGISTRY.map((cat, idx) => {
+        <div className="grid grid-cols-4 gap-2 max-w-sm sm:max-w-md mx-auto w-full">
+          {CATEGORIES_REGISTRY.map((cat) => {
             const prog = saveData.categoryProgress[cat.id];
             const lvl = prog?.currentLevel || 1;
             const isSelected = saveData.selectedCategory === cat.id;
@@ -189,17 +189,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   sounds.playKey();
                   onSelectCategory(cat.id);
                 }}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-150 relative cursor-pointer ${
+                className={`flex flex-col items-center justify-center py-2 px-1.5 rounded-xl border transition-all duration-150 relative cursor-pointer ${
                   isSelected
                     ? 'bg-sky-50/80 border-sky-400 shadow-xs ring-2 ring-sky-200'
                     : 'bg-white border-slate-200 hover:border-sky-300 hover:bg-slate-50/60'
                 }`}
               >
-                <span className="text-[10px] font-black text-slate-600 mb-0.5">
-                  {String(idx + 1).padStart(2, '0')}
-                </span>
-                <span className="text-2xl mb-1 select-none">{cat.icon}</span>
-                <span className="text-xs font-black text-slate-800 tracking-tight">
+                <span className="text-2xl mb-0.5 select-none">{cat.icon}</span>
+                <span className="text-xs font-black text-slate-800 tracking-tight leading-tight">
                   {cat.name}
                 </span>
                 <span className="text-[10px] font-bold text-sky-700 bg-sky-100/70 px-1.5 py-0.2 rounded-md mt-1">
