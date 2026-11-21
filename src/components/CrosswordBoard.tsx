@@ -74,7 +74,14 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    if (!val || !selectedCell) return;
+    if (!selectedCell) return;
+
+    if (!val) {
+      // Input cleared or backspace on mobile keyboard
+      onCellBackspace(selectedCell.row, selectedCell.col);
+      lastProcessedRef.current = '';
+      return;
+    }
 
     lastProcessedRef.current = val;
     onCellInput(selectedCell.row, selectedCell.col, val);
@@ -268,7 +275,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                       autoCapitalize="off"
                       autoCorrect="off"
                       spellCheck="false"
-                      className={`w-full h-full text-center font-black bg-transparent outline-none p-0 m-0 cursor-text select-all ${getLetterFontSize()} ${inputStyle}`}
+                      className={`w-full h-full text-center font-black bg-transparent outline-none p-0 m-0 cursor-text ${getLetterFontSize()} ${inputStyle}`}
                       style={{ fontSize: getInputPixelFontSize() }}
                     />
                   ) : userVal ? (

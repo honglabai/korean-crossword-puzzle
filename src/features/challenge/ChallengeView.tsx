@@ -4,7 +4,7 @@ import { ThemeId, THEMES, getDefaultThemeForLevel } from '../../types/theme';
 import { getCategoryMeta } from '../../data/categoryRegistry';
 import { getBoardForCategoryAndLevel, generateFreshBoard } from '../../data/boardProvider';
 import { sounds } from '../../utils/audio';
-import { combineHangulInput, decompose, compose } from '../../utils/hangul';
+import { combineHangulInput, decompose, compose, checkCellStatus, isCompleteSyllable } from '../../utils/hangul';
 import { CategoryLevelBar } from '../../components/CategoryLevelBar';
 import { CategorySelectorModal } from '../../components/CategorySelectorModal';
 import { CrosswordBoard } from '../../components/CrosswordBoard';
@@ -519,20 +519,31 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
     [board, isDailyChallengeActive, selectedCategory, clearCountInLevel, elapsedSeconds, onUpdateSaveData, onClearCustomDailyBoard]
   );
 
-  // Cell input
+  // Cell input with smart Hangul composition
   const handleCellInput = useCallback(
     (r: number, c: number, char: string) => {
       const cell = board.grid[r]?.[c];
       if (!cell || !cell.isActive) return;
 
-      const isCorrect = char === cell.solutionChar;
+      const currentVal = userGrid[r]?.[c] || '';
+      const sol = cell.solutionChar || '';
+      const combined = combineHangulInput(currentVal, char, sol);
+
       sounds.playKey();
 
       const newGrid = userGrid.map((row) => [...row]);
-      newGrid[r][c] = char;
-      setUserGrid(newGrid);
+      newGrid[r][c] = combined.currentCell;
 
-      if (!isCorrect && char.trim() !== '') {
+      const valStatus = checkCellStatus(combined.currentCell, sol);
+
+      // Handle wrong cell indicator & mistake recording
+      if (valStatus === 'correct' || valStatus === 'composing' || !combined.currentCell) {
+        setWrongCells((prev) => {
+          const next = new Set(prev);
+          next.delete(`${r},${c}`);
+          return next;
+        });
+      } else if (valStatus === 'incorrect' && (combined.shouldAdvance || isCompleteSyllable(combined.currentCell))) {
         setWrongCells((prev) => new Set([...prev, `${r},${c}`]));
         const pw = board.placedWords.find((w) => {
           if (w.direction === 'across') return w.startRow === r && c >= w.startCol && c < w.startCol + w.length;
@@ -541,74 +552,64 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
         if (pw) {
           recordWordMistake(pw.term, pw.definition, selectedCategory);
         }
-      } else {
-        setWrongCells((prev) => {
-          const next = new Set(prev);
-          next.delete(`${r},${c}`);
-          return next;
-        });
       }
 
-      // Move cursor
-      let nextCell = selectedCell;
-      if (activeDirection === 'across') {
-        const nextC = c + 1;
-        if (nextC < board.size && board.grid[r]?.[nextC]?.isActive) {
-          nextCell = { row: r, col: nextC };
-          setSelectedCell(nextCell);
-        }
-      } else {
-        const nextR = r + 1;
-        if (nextR < board.size && board.grid[nextR]?.[c]?.isActive) {
-          nextCell = { row: nextR, col: c };
-          setSelectedCell(nextCell);
-        }
-      }
-
-      persistActiveSession(newGrid, revealedChosungs, nextCell, activeWordId, activeDirection);
-      checkCompletion(newGrid);
-    },
-    [board, userGrid, selectedCell, activeDirection, activeWordId, revealedChosungs, selectedCategory, persistActiveSession, checkCompletion]
-  );
-
-  // Virtual key input
-  const handleVirtualKeyInput = useCallback(
-    (jamo: string) => {
-      if (!selectedCell) return;
-      const { row, col } = selectedCell;
-      const cell = board.grid[row]?.[col];
-      if (!cell || !cell.isActive) return;
-
-      const currentVal = userGrid[row]?.[col] || '';
-      const sol = cell.solutionChar || '';
-      const combined = combineHangulInput(currentVal, jamo, sol);
-
-      const newGrid = userGrid.map((rArr) => [...rArr]);
-      newGrid[row][col] = combined.currentCell;
-
+      // Cursor movement: only advance when character composition is completed / matched
       let nextPos = selectedCell;
-      if (combined.nextCell && activeWord) {
-        const currIdx =
-          activeWord.direction === 'across' ? col - activeWord.startCol : row - activeWord.startRow;
-        if (currIdx >= 0 && currIdx < activeWord.length - 1) {
-          const nextR =
-            activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currIdx + 1;
-          const nextC =
-            activeWord.direction === 'across' ? activeWord.startCol + currIdx + 1 : activeWord.startCol;
-          newGrid[nextR][nextC] = combined.nextCell;
-          nextPos = { row: nextR, col: nextC };
-          setSelectedCell(nextPos);
-        }
-      } else if (combined.shouldAdvance && activeWord) {
-        const currIdx =
-          activeWord.direction === 'across' ? col - activeWord.startCol : row - activeWord.startRow;
-        if (currIdx >= 0 && currIdx < activeWord.length - 1) {
-          const nextR =
-            activeWord.direction === 'across' ? activeWord.startRow : activeWord.startRow + currIdx + 1;
-          const nextC =
-            activeWord.direction === 'across' ? activeWord.startCol + currIdx + 1 : activeWord.startCol;
-          nextPos = { row: nextR, col: nextC };
-          setSelectedCell(nextPos);
+      if (combined.shouldAdvance) {
+        if (activeDirection === 'across') {
+          if (activeWord && activeWord.direction === 'across') {
+            const currIdx = c - activeWord.startCol;
+            if (currIdx >= 0 && currIdx < activeWord.length - 1) {
+              const nextC = c + 1;
+              nextPos = { row: r, col: nextC };
+              if (combined.nextCell) {
+                newGrid[r][nextC] = combined.nextCell;
+              }
+              setSelectedCell(nextPos);
+            } else if (c + 1 < board.size && board.grid[r]?.[c + 1]?.isActive) {
+              const nextC = c + 1;
+              nextPos = { row: r, col: nextC };
+              if (combined.nextCell) {
+                newGrid[r][nextC] = combined.nextCell;
+              }
+              setSelectedCell(nextPos);
+            }
+          } else if (c + 1 < board.size && board.grid[r]?.[c + 1]?.isActive) {
+            const nextC = c + 1;
+            nextPos = { row: r, col: nextC };
+            if (combined.nextCell) {
+              newGrid[r][nextC] = combined.nextCell;
+            }
+            setSelectedCell(nextPos);
+          }
+        } else {
+          // activeDirection === 'down'
+          if (activeWord && activeWord.direction === 'down') {
+            const currIdx = r - activeWord.startRow;
+            if (currIdx >= 0 && currIdx < activeWord.length - 1) {
+              const nextR = r + 1;
+              nextPos = { row: nextR, col: c };
+              if (combined.nextCell) {
+                newGrid[nextR][c] = combined.nextCell;
+              }
+              setSelectedCell(nextPos);
+            } else if (r + 1 < board.size && board.grid[r + 1]?.[c]?.isActive) {
+              const nextR = r + 1;
+              nextPos = { row: nextR, col: c };
+              if (combined.nextCell) {
+                newGrid[nextR][c] = combined.nextCell;
+              }
+              setSelectedCell(nextPos);
+            }
+          } else if (r + 1 < board.size && board.grid[r + 1]?.[c]?.isActive) {
+            const nextR = r + 1;
+            nextPos = { row: nextR, col: c };
+            if (combined.nextCell) {
+              newGrid[nextR][c] = combined.nextCell;
+            }
+            setSelectedCell(nextPos);
+          }
         }
       }
 
@@ -616,7 +617,16 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
       persistActiveSession(newGrid, revealedChosungs, nextPos, activeWordId, activeDirection);
       checkCompletion(newGrid);
     },
-    [selectedCell, board.grid, userGrid, activeWord, revealedChosungs, activeWordId, activeDirection, persistActiveSession, checkCompletion]
+    [board, userGrid, selectedCell, activeDirection, activeWord, activeWordId, revealedChosungs, selectedCategory, persistActiveSession, checkCompletion]
+  );
+
+  // Virtual key input
+  const handleVirtualKeyInput = useCallback(
+    (jamo: string) => {
+      if (!selectedCell) return;
+      handleCellInput(selectedCell.row, selectedCell.col, jamo);
+    },
+    [selectedCell, handleCellInput]
   );
 
   // Backspace

@@ -179,39 +179,67 @@ export function combineHangulInput(
     }
   }
 
-  // 2. Multi-character buffer check: Syllable + consonant (e.g. '과ㄴ' -> '관', '미ㄴ' -> '민', '화ㄱ' -> '확')
-  if (trimmed.length === 2 && isCompleteSyllable(trimmed[0]) && isConsonant(trimmed[1])) {
+  // 2. Multi-character buffer check: Syllable + consonant (e.g. '과ㄴ' -> '관', '미ㄴ' -> '민', '화ㄱ' -> '확', '관ㄷ' -> '관' + 'ㄷ')
+  if (trimmed.length >= 2 && isCompleteSyllable(trimmed[0])) {
     const dec = decompose(trimmed[0]);
-    if (dec && !dec.jong) {
-      // ONLY overflow consonant to next cell if current syllable ALREADY matches complete solution
-      // AND solution explicitly has NO final consonant (받침)!
-      // (e.g. solution is '비' and user already typed '비', and now types 'ㄹ' for the next cell '례')
-      if (solutionChar && trimmed[0] === solutionChar && !solutionHasJong) {
-        return { currentCell: trimmed[0], nextCell: trimmed[1], shouldAdvance: true };
-      }
+    if (dec) {
+      if (isConsonant(trimmed[1])) {
+        if (!dec.jong) {
+          // ONLY overflow consonant to next cell if current syllable ALREADY matches complete solution
+          // AND solution explicitly has NO final consonant (받침)!
+          // (e.g. solution is '비' and user already typed '비', and now types 'ㄹ' for the next cell '례')
+          if (solutionChar && trimmed[0] === solutionChar && !solutionHasJong) {
+            return { currentCell: trimmed[0], nextCell: trimmed.slice(1), shouldAdvance: true };
+          }
 
-      // If solution expects this 받침 (e.g. '과' + 'ㄴ' for '관', '미' + 'ㄴ' for '민')
-      if (solDec && solDec.jong === trimmed[1]) {
-        const combined = compose(dec.cho, dec.jung, trimmed[1]);
-        if (combined) {
-          return combineHangulInput(prevChar, combined, solutionChar);
-        }
-      }
+          // If solution expects this 받침 (e.g. '과' + 'ㄴ' for '관', '미' + 'ㄴ' for '민')
+          if (solDec && solDec.jong === trimmed[1]) {
+            const combined = compose(dec.cho, dec.jung, trimmed[1]);
+            if (combined) {
+              if (trimmed.length > 2) {
+                return combineHangulInput(prevChar, combined + trimmed.slice(2), solutionChar);
+              }
+              return combineHangulInput(prevChar, combined, solutionChar);
+            }
+          }
 
-      // Combine into 받침 if valid final consonant (e.g. '과' + 'ㄴ' = '관')
-      if (JONG_LIST.includes(trimmed[1])) {
-        const combined = compose(dec.cho, dec.jung, trimmed[1]);
-        if (combined) {
-          return combineHangulInput(prevChar, combined, solutionChar);
+          // Combine into 받침 if valid final consonant (e.g. '과' + 'ㄴ' = '관')
+          if (JONG_LIST.includes(trimmed[1])) {
+            const combined = compose(dec.cho, dec.jung, trimmed[1]);
+            if (combined) {
+              if (trimmed.length > 2) {
+                return combineHangulInput(prevChar, combined + trimmed.slice(2), solutionChar);
+              }
+              return combineHangulInput(prevChar, combined, solutionChar);
+            }
+          }
+        } else {
+          // Syllable already has a final consonant (e.g. '관' in '관ㄷ')
+          // Check for complex final consonant if solution expects it (e.g. '갑' + 'ㅅ' = '값')
+          const complexKey = dec.jong + trimmed[1];
+          if (COMPLEX_JONGS[complexKey] && solDec && solDec.jong === COMPLEX_JONGS[complexKey]) {
+            const complexSyllable = compose(dec.cho, dec.jung, COMPLEX_JONGS[complexKey]);
+            if (complexSyllable) {
+              return combineHangulInput(prevChar, complexSyllable, solutionChar);
+            }
+          }
+          // Otherwise, trimmed[0] is complete and trimmed.slice(1) belongs to next cell
+          return { currentCell: trimmed[0], nextCell: trimmed.slice(1), shouldAdvance: true };
         }
+      } else if (isCompleteSyllable(trimmed[1])) {
+        // Two complete syllables (e.g. '관' and '심')
+        return { currentCell: trimmed[0], nextCell: trimmed.slice(1), shouldAdvance: true };
       }
     }
   }
 
-  // 3. Multi-character buffer check: 2 consonants/vowels (e.g. 'ㅂㅣ' -> '비')
-  if (trimmed.length === 2 && isConsonant(trimmed[0]) && isVowel(trimmed[1])) {
+  // 3. Multi-character buffer check: 2 consonants/vowels (e.g. 'ㅂㅣ' -> '비', 'ㄱㅗㅏㄴ' -> '관')
+  if (trimmed.length >= 2 && isConsonant(trimmed[0]) && isVowel(trimmed[1])) {
     const combined = compose(trimmed[0], trimmed[1], '');
     if (combined) {
+      if (trimmed.length > 2) {
+        return combineHangulInput(prevChar, combined + trimmed.slice(2), solutionChar);
+      }
       return combineHangulInput(prevChar, combined, solutionChar);
     }
   }
