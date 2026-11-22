@@ -127,14 +127,14 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
   };
 
   const getNumberFontSize = (text?: string) => {
-    const isMulti = Boolean(text && text.length > 2);
+    const isMulti = Boolean(text && text.length > 1);
     if (isLargeFont) {
-      if (isMulti) return 'text-[7.5px] sm:text-[9.5px] font-black tracking-tighter';
+      if (isMulti) return 'text-[8px] sm:text-[10px] font-black tracking-tighter';
       if (size <= 8) return 'text-[10px] sm:text-[12px] font-black';
       if (size <= 10) return 'text-[9px] sm:text-[11px] font-black';
       return 'text-[8px] sm:text-[10px] font-black';
     }
-    if (isMulti) return 'text-[7px] sm:text-[8.5px] font-black tracking-tighter';
+    if (isMulti) return 'text-[7.5px] sm:text-[9px] font-black tracking-tighter';
     if (size <= 8) return 'text-[9px] sm:text-[11px] font-black';
     if (size <= 10) return 'text-[8px] sm:text-[10px] font-black';
     return 'text-[7px] sm:text-[9px] font-black';

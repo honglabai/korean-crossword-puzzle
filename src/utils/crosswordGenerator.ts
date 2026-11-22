@@ -106,7 +106,7 @@ export function buildBoardGrid(size: number, placedWords: PlacedWord[]): CellDat
       } else if (startingWords.length > 1) {
         const sorted = [...startingWords].sort((a, b) => a.number - b.number);
         cell.startNumber = sorted[0].number;
-        cell.startNumberText = `(${sorted.map((w) => w.number).join(', ')})`;
+        cell.startNumberText = sorted.map((w) => w.clueNumberText).join(', ');
       }
     }
   }

@@ -63,7 +63,7 @@ describe('crosswordGenerator', () => {
     expect(grid[2][2].solutionChar).toBe('');
   });
 
-  it('formats startNumberText as (2, 3) when words start together at the same cell', () => {
+  it('formats startNumberText with circled numbers when words start together at the same cell', () => {
     const placedWords: PlacedWord[] = [
       {
         id: 'w2',
@@ -91,7 +91,7 @@ describe('crosswordGenerator', () => {
 
     const grid = buildBoardGrid(8, placedWords);
     expect(grid[1][3].startNumber).toBe(2);
-    expect(grid[1][3].startNumberText).toBe('(2, 3)');
+    expect(grid[1][3].startNumberText).toBe('②, ③');
   });
 
   it('generates identical boards when using the same seed', () => {
