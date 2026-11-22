@@ -43,81 +43,81 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({
 
   return (
     <header className="relative w-full max-w-5xl mx-auto pt-2 pb-1 px-1.5 sm:px-3 select-none touch-manipulation">
-      <div className="flex items-center justify-between gap-2 sm:gap-2.5">
-        {/* Left: Logo & Category Title & Inline App Install */}
-        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+      <div className="flex flex-col gap-1 sm:gap-1.5 w-full">
+        {/* 1번째 줄: 정치, 초급 : 10단어, 레벨 진단 (모바일/데스크톱 모두 각각 한 줄) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap w-full">
+          {/* 1. Category Picker Pill Button: "정치" */}
+          {onOpenCategoryModal && (
+            <button
+              onClick={() => {
+                sounds.playKey();
+                onOpenCategoryModal();
+              }}
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-black text-slate-800 bg-white hover:bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-300 shadow-2xs transition active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+              title="분야 선택"
+            >
+              <span>{catMeta.icon}</span>
+              <span>{catMeta.name}</span>
+            </button>
+          )}
+
+          {/* 2. Tier Info Badge: "초급 : 10단어" */}
+          <span className={`px-2 py-0.5 text-[11px] sm:text-xs font-bold tracking-wide rounded-full border shadow-2xs shrink-0 whitespace-nowrap ${tierInfo.badgeClass}`}>
+            {tierInfo.label} : {tierInfo.words}단어
+          </span>
+
+          {/* 3. Level Placement Test: "레벨 진단" */}
           <button
-            onClick={onOpenCategoryModal}
-            className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-white/95 rounded-xl shadow-sm border border-slate-200 shrink-0 hover:scale-105 active:scale-95 transition cursor-pointer"
-            title="분야 변경"
+            onClick={onOpenTest}
+            className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700 bg-white/90 hover:bg-white px-2 py-0.5 rounded-full border border-slate-300 transition-all shadow-2xs cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
           >
-            <span className="text-xl sm:text-2xl">{catMeta.icon}</span>
-            <span className="absolute -bottom-1 -right-1 text-xs">✨</span>
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            <span>레벨 진단</span>
           </button>
-
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              {/* 1. Category Picker Pill Button: "정치" */}
-              {onOpenCategoryModal && (
-                <button
-                  onClick={() => {
-                    sounds.playKey();
-                    onOpenCategoryModal();
-                  }}
-                  className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-black text-slate-800 bg-white hover:bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-300 shadow-2xs transition active:scale-95 cursor-pointer"
-                  title="분야 선택"
-                >
-                  <span>{catMeta.icon}</span>
-                  <span>{catMeta.name}</span>
-                </button>
-              )}
-
-              {/* 2. Tier Info Badge: "초급 : 10단어" */}
-              <span className={`px-2 py-0.5 text-[11px] sm:text-xs font-bold tracking-wide rounded-full border shadow-2xs ${tierInfo.badgeClass}`}>
-                {tierInfo.label} : {tierInfo.words}단어
-              </span>
-
-              {/* 3. Level Placement Test: "레벨 진단" */}
-              <button
-                onClick={onOpenTest}
-                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700 bg-white/90 hover:bg-white px-2 py-0.5 rounded-full border border-slate-300 transition-all shadow-2xs cursor-pointer active:scale-95"
-              >
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                레벨 진단
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <h1 className="text-base sm:text-xl md:text-2xl font-black text-slate-800 tracking-tight inline-flex items-center gap-1.5">
-                <span>{catMeta.fullName} 낱말퍼즐</span>
-              </h1>
-
-              {/* App Install Button - 제목 뒤에 바로 붙여 별도 라인을 차지하지 않음 */}
-              {onOpenInstallModal && (
-                <button
-                  onClick={() => {
-                    sounds.playKey();
-                    onOpenInstallModal();
-                  }}
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-full shadow-2xs text-[11px] font-black transition cursor-pointer active:scale-95 border border-sky-400 shrink-0"
-                  title="홈 화면에 낱말퍼즐 앱 설치하기"
-                >
-                  <img src="/favicon-32x32.png" alt="" className="w-3 h-3 rounded-xs" />
-                  <span>앱 설치</span>
-                </button>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Right: Timer */}
-        <div className="flex items-center gap-1.5 sm:gap-2 justify-end shrink-0">
-          {/* Live Game Stopwatch / Timer Badge */}
+        {/* 2번째 줄: 집(이모지), 대한민국 헌법·정치 낱말퍼즐, 앱 설치, 시간 (한 줄) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap w-full">
+          {/* 집(이모지) 분야 변경 버튼 */}
+          {onOpenCategoryModal && (
+            <button
+              onClick={() => {
+                sounds.playKey();
+                onOpenCategoryModal();
+              }}
+              className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-white/95 rounded-lg shadow-2xs border border-slate-200 shrink-0 hover:scale-105 active:scale-95 transition cursor-pointer"
+              title="분야 변경"
+            >
+              <span className="text-base sm:text-lg">{catMeta.icon}</span>
+            </button>
+          )}
+
+          {/* 대한민국 헌법·정치 낱말퍼즐 제목 */}
+          <h1 className="text-[13px] sm:text-base md:text-xl font-black text-slate-800 tracking-tight whitespace-nowrap truncate shrink min-w-0">
+            <span>{catMeta.fullName} 낱말퍼즐</span>
+          </h1>
+
+          {/* 앱 설치 버튼 */}
+          {onOpenInstallModal && (
+            <button
+              onClick={() => {
+                sounds.playKey();
+                onOpenInstallModal();
+              }}
+              className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-full shadow-2xs text-[10px] sm:text-xs font-black transition cursor-pointer active:scale-95 border border-sky-400 shrink-0 whitespace-nowrap"
+              title="홈 화면에 낱말퍼즐 앱 설치하기"
+            >
+              <img src="/favicon-32x32.png" alt="" className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-xs" />
+              <span>앱 설치</span>
+            </button>
+          )}
+
+          {/* 시간 (타이머) */}
           <div
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-900 text-amber-300 rounded-full border border-slate-700 shadow-xs text-xs font-mono font-bold tracking-wider"
+            className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 bg-slate-900 text-amber-300 rounded-full border border-slate-700 shadow-2xs text-[11px] sm:text-xs font-mono font-bold tracking-wider shrink-0 whitespace-nowrap ml-auto"
             title="소요 시간"
           >
-            <Timer className={`w-3.5 h-3.5 text-amber-400 ${isTimerRunning ? 'animate-pulse' : ''}`} />
+            <Timer className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 ${isTimerRunning ? 'animate-pulse' : ''}`} />
             <span>{formatTimer(elapsedSeconds)}</span>
           </div>
         </div>
