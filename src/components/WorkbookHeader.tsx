@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Calendar, BookOpen, Timer } from 'lucide-react';
+import { Sparkles, BookOpen, Timer } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { CategoryId } from '../types/puzzle';
 import { getCategoryMeta } from '../data/categoryRegistry';
@@ -25,13 +25,6 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({
   onOpenCategoryModal,
   onOpenInstallModal,
 }) => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1;
-  const date = today.getDate();
-  const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-  const dayName = dayNames[today.getDay()];
-
   const catMeta = getCategoryMeta(selectedCategory);
 
   const formatTimer = (sec: number = 0) => {
@@ -117,7 +110,7 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Timer & Date */}
+        {/* Right: Timer */}
         <div className="flex items-center gap-1.5 sm:gap-2 justify-end shrink-0">
           {/* Live Game Stopwatch / Timer Badge */}
           <div
@@ -126,15 +119,6 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({
           >
             <Timer className={`w-3.5 h-3.5 text-amber-400 ${isTimerRunning ? 'animate-pulse' : ''}`} />
             <span>{formatTimer(elapsedSeconds)}</span>
-          </div>
-
-          {/* Date Capsule Box */}
-          <div className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 bg-white/95 backdrop-blur-xs rounded-full border border-slate-300 shadow-xs text-xs font-semibold text-slate-700">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono font-bold">{year}.{month}.{date}</span>
-            <span className="text-[10px] font-bold text-slate-700 ml-0.5 bg-slate-100 px-1.5 py-0.2 rounded-full hidden sm:inline">
-              {dayName}
-            </span>
           </div>
         </div>
       </div>
