@@ -27,6 +27,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
   theme,
   userGrid,
   activeWord,
+  activeDirection,
   selectedCell,
   wrongCells,
   revealedChosungs,
@@ -125,7 +126,15 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
     return 'text-base sm:text-xl font-black';
   };
 
-  const getNumberFontSize = () => {
+  const getNumberFontSize = (text?: string) => {
+    const isMulti = Boolean(text && text.length > 2);
+    if (isLargeFont) {
+      if (isMulti) return 'text-[7.5px] sm:text-[9.5px] font-black tracking-tighter';
+      if (size <= 8) return 'text-[10px] sm:text-[12px] font-black';
+      if (size <= 10) return 'text-[9px] sm:text-[11px] font-black';
+      return 'text-[8px] sm:text-[10px] font-black';
+    }
+    if (isMulti) return 'text-[7px] sm:text-[8.5px] font-black tracking-tighter';
     if (size <= 8) return 'text-[9px] sm:text-[11px] font-black';
     if (size <= 10) return 'text-[8px] sm:text-[10px] font-black';
     return 'text-[7px] sm:text-[9px] font-black';
@@ -213,6 +222,15 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                 ? 'caret-rose-600 text-rose-700'
                 : 'caret-amber-600 text-slate-900';
 
+              const wordsInCell = board.placedWords.filter((pw) => {
+                if (pw.direction === 'across') {
+                  return pw.startRow === r && c >= pw.startCol && c < pw.startCol + pw.length;
+                } else {
+                  return pw.startCol === c && r >= pw.startRow && r < pw.startRow + pw.length;
+                }
+              });
+              const isCellIntersection = wordsInCell.length > 1;
+
               // Active cell: Direct in-cell text input
               return (
                 <div
@@ -232,7 +250,7 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
                           : isCharIncorrect
                           ? 'text-rose-600/80'
                           : theme?.numberColor || 'text-slate-700'
-                      } ${getNumberFontSize()}`}
+                      } ${getNumberFontSize(cell.startNumberText)}`}
                     >
                       {cell.startNumberText}
                     </span>
@@ -262,22 +280,43 @@ export const CrosswordBoard: React.FC<CrosswordBoardProps> = ({
 
                   {/* Direct In-Cell Input for Selected Cell */}
                   {isSelected ? (
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={userVal}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
-                      onCompositionEnd={handleCompositionEnd}
-                      onClick={() => onCellClick(r, c)}
-                      inputMode="text"
-                      autoComplete="off"
-                      autoCapitalize="off"
-                      autoCorrect="off"
-                      spellCheck="false"
-                      className={`w-full h-full text-center font-black bg-transparent outline-none p-0 m-0 cursor-text ${getLetterFontSize()} ${inputStyle}`}
-                      style={{ fontSize: getInputPixelFontSize() }}
-                    />
+                    <>
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={userVal}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        onCompositionEnd={handleCompositionEnd}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCellClick(r, c);
+                        }}
+                        inputMode="text"
+                        autoComplete="off"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        className={`w-full h-full text-center font-black bg-transparent outline-none p-0 m-0 cursor-text ${getLetterFontSize()} ${inputStyle}`}
+                        style={{ fontSize: getInputPixelFontSize() }}
+                      />
+                      {/* In-cell direction toggle badge for intersection/joint start cell */}
+                      {isCellIntersection && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            sounds.playKey();
+                            onCellClick(r, c);
+                          }}
+                          className="absolute bottom-[0.5px] right-[0.5px] z-30 px-1 py-0.2 rounded-[3px] bg-slate-900/90 hover:bg-slate-950 text-white text-[7.5px] sm:text-[9px] font-black flex items-center gap-0.5 shadow-xs cursor-pointer select-none border border-white/20 active:scale-95 transition"
+                          title="클릭하여 가로/세로 방향 및 힌트 전환"
+                        >
+                          <span>{activeDirection === 'across' ? '가로' : '세로'}</span>
+                          <span className="text-[7px] opacity-80">⇄</span>
+                        </button>
+                      )}
+                    </>
                   ) : userVal ? (
                     <span className={`leading-none pointer-events-none ${getLetterFontSize()} ${letterTextColor}`}>
                       {userVal}

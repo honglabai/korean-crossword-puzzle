@@ -90,12 +90,23 @@ export function buildBoardGrid(size: number, placedWords: PlacedWord[]): CellDat
       if (!cell.wordIds.includes(pw.id)) {
         cell.wordIds.push(pw.id);
       }
+    }
+  }
 
-      if (i === 0) {
-        if (!cell.startNumber) {
-          cell.startNumber = pw.number;
-          cell.startNumberText = pw.clueNumberText;
-        }
+  // Assign start numbers and clue number texts
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const cell = grid[r][c];
+      if (!cell.isActive) continue;
+
+      const startingWords = placedWords.filter((pw) => pw.startRow === r && pw.startCol === c);
+      if (startingWords.length === 1) {
+        cell.startNumber = startingWords[0].number;
+        cell.startNumberText = startingWords[0].clueNumberText;
+      } else if (startingWords.length > 1) {
+        const sorted = [...startingWords].sort((a, b) => a.number - b.number);
+        cell.startNumber = sorted[0].number;
+        cell.startNumberText = `(${sorted.map((w) => w.number).join(', ')})`;
       }
     }
   }

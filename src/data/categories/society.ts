@@ -339,7 +339,7 @@ export const SOCIETY_WORDS: WordItem[] = [
   { id: 's10_27', level: 10, term: '탈식민주의', definition: '제국주의 지배의 문화적·정신적 유산을 청산하고 피억압자의 목소리를 복원하려는 사조.', category: 'SOCIETY' },
   { id: 's10_28', level: 10, term: '교차성', definition: '성별, 인종, 계급, 성적지향 등 복합적인 차별 기제가 서로 얽혀 작동한다는 관점.', category: 'SOCIETY' },
   { id: 's10_29', level: 10, term: '전지구화', definition: '자본, 노동, 상품, 정보가 국경을 넘어 실시간으로 상호 연결되고 이동하는 세계화.', category: 'SOCIETY' },
-  { id: 's10_30', level: 10, term: '초국적기업', definition: '세계 각국에 생산 기지와 판매망을 구축하여 국경 없는 영리 활동을 벌이는 대기업.', category: 'SOCIETY' },
+  { id: 's10_30', level: 10, term: '다국적기업', definition: '세계 각국에 생산 기지와 판매망을 구축하여 국경 없는 영리 활동을 벌이는 대기업.', category: 'SOCIETY' },
   { id: 's10_31', level: 10, term: '초국적사회', definition: '단일 국민국가의 경계를 넘어 이주민과 문화가 다층적으로 공존하는 현대 사회.', category: 'SOCIETY' },
 ];
 

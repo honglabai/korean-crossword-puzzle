@@ -4,7 +4,6 @@ import { ColorTheme } from '../types/theme';
 import {
   ArrowRight,
   ArrowDown,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
   HelpCircle,
@@ -26,6 +25,7 @@ interface ActiveClueCardProps {
   selectedCategory?: CategoryId;
   onRequestHint: () => void;
   onToggleDirection: () => void;
+  onSelectDirection?: (dir: Direction) => void;
   onPrevWord: () => void;
   onNextWord: () => void;
   isCompleted: boolean;
@@ -42,6 +42,7 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
   selectedCategory = 'POLITICS',
   onRequestHint,
   onToggleDirection,
+  onSelectDirection,
   onPrevWord,
   onNextWord,
   isCompleted,
@@ -76,42 +77,67 @@ export const ActiveClueCard: React.FC<ActiveClueCardProps> = ({
             {activeWord.clueNumberText}
           </span>
 
-          {/* Direction Pill (Clickable to switch direction if intersection exists) */}
-          <button
-            onClick={() => {
-              if (isIntersection) {
-                sounds.playKey();
-                onToggleDirection();
-              }
-            }}
-            disabled={!isIntersection}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black text-white transition active:scale-95 ${
-              isIntersection
-                ? 'bg-gradient-to-r from-[#0288d1] to-[#7b1fa2] hover:opacity-95 shadow-2xs cursor-pointer ring-1 ring-white/60'
-                : activeDirection === 'across'
-                ? 'bg-[#0288d1] cursor-default'
-                : 'bg-[#7b1fa2] cursor-default'
-            }`}
-            title={isIntersection ? '클릭하여 가로/세로 방향 전환' : '현재 단어 방향'}
-          >
-            {activeDirection === 'across' ? (
-              <>
-                <ArrowRight className="w-4 h-4" />
+          {/* Direction Pill / Segmented Switcher (Clickable to switch direction if intersection exists) */}
+          {isIntersection ? (
+            <div className="inline-flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-300 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playKey();
+                  if (activeDirection !== 'across') {
+                    if (onSelectDirection) onSelectDirection('across');
+                    else onToggleDirection();
+                  }
+                }}
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black transition cursor-pointer active:scale-95 ${
+                  activeDirection === 'across'
+                    ? 'bg-[#0288d1] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+                title="가로 단어 및 힌트로 전환"
+              >
+                <ArrowRight className="w-3.5 h-3.5" />
                 <span>가로</span>
-              </>
-            ) : (
-              <>
-                <ArrowDown className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playKey();
+                  if (activeDirection !== 'down') {
+                    if (onSelectDirection) onSelectDirection('down');
+                    else onToggleDirection();
+                  }
+                }}
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black transition cursor-pointer active:scale-95 ${
+                  activeDirection === 'down'
+                    ? 'bg-[#7b1fa2] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+                title="세로 단어 및 힌트로 전환"
+              >
+                <ArrowDown className="w-3.5 h-3.5" />
                 <span>세로</span>
-              </>
-            )}
-            {isIntersection && (
-              <>
-                <span className="text-[10px] opacity-90">⇄</span>
-                <RefreshCw className="w-3 h-3 opacity-90 animate-spin-slow" />
-              </>
-            )}
-          </button>
+              </button>
+            </div>
+          ) : (
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black text-white ${
+                activeDirection === 'across' ? 'bg-[#0288d1]' : 'bg-[#7b1fa2]'
+              }`}
+            >
+              {activeDirection === 'across' ? (
+                <>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>가로</span>
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="w-3.5 h-3.5" />
+                  <span>세로</span>
+                </>
+              )}
+            </span>
+          )}
 
           {/* Progress / Word Length Badge */}
           {isCompleted ? (

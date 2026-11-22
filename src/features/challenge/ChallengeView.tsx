@@ -335,6 +335,30 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
     }
   }, [selectedCell, board.placedWords, activeDirection, userGrid, revealedChosungs, persistActiveSession]);
 
+  // Direction select
+  const handleSelectDirection = useCallback(
+    (targetDir: Direction) => {
+      if (!selectedCell) return;
+      const { row, col } = selectedCell;
+      const wordsAtCell = board.placedWords.filter((pw) => {
+        if (pw.direction === 'across') {
+          return pw.startRow === row && col >= pw.startCol && col < pw.startCol + pw.length;
+        } else {
+          return pw.startCol === col && row >= pw.startRow && row < pw.startRow + pw.length;
+        }
+      });
+
+      const targetWord = wordsAtCell.find((w) => w.direction === targetDir);
+      if (targetWord && (targetWord.id !== activeWordId || targetDir !== activeDirection)) {
+        sounds.playKey();
+        setActiveDirection(targetWord.direction);
+        setActiveWordId(targetWord.id);
+        persistActiveSession(userGrid, revealedChosungs, selectedCell, targetWord.id, targetWord.direction);
+      }
+    },
+    [selectedCell, board.placedWords, activeWordId, activeDirection, userGrid, revealedChosungs, persistActiveSession]
+  );
+
   // Cell click
   const handleCellClick = useCallback(
     (r: number, c: number) => {
@@ -363,19 +387,16 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
         return;
       }
 
-      const isCellInCurrentWord = activeWord && wordsAtCell.some((w) => w.id === activeWord.id);
       setSelectedCell({ row: r, col: c });
 
-      if (isCellInCurrentWord && wordsAtCell.length > 1) {
-        const otherWord = wordsAtCell.find((w) => w.direction !== activeDirection);
-        if (otherWord) {
-          setActiveDirection(otherWord.direction);
-          setActiveWordId(otherWord.id);
-          persistActiveSession(userGrid, revealedChosungs, { row: r, col: c }, otherWord.id, otherWord.direction);
-          return;
-        }
+      // If activeWord already covers this newly clicked cell, keep activeDirection and activeWord
+      const isCellInCurrentWord = activeWord && wordsAtCell.some((w) => w.id === activeWord.id);
+      if (isCellInCurrentWord) {
+        persistActiveSession(userGrid, revealedChosungs, { row: r, col: c }, activeWord.id, activeDirection);
+        return;
       }
 
+      // Otherwise prefer matching current active direction
       const matchingWord = wordsAtCell.find((w) => w.direction === activeDirection) || wordsAtCell[0];
       if (matchingWord) {
         setActiveDirection(matchingWord.direction);
@@ -802,6 +823,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
           selectedCategory={selectedCategory}
           onRequestHint={() => setIsChosungModalOpen(true)}
           onToggleDirection={handleToggleDirection}
+          onSelectDirection={handleSelectDirection}
           onPrevWord={() => {
             if (board.placedWords.length === 0) return;
             const idx = board.placedWords.findIndex((w) => w.id === activeWordId);

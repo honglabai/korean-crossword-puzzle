@@ -63,6 +63,37 @@ describe('crosswordGenerator', () => {
     expect(grid[2][2].solutionChar).toBe('');
   });
 
+  it('formats startNumberText as (2, 3) when words start together at the same cell', () => {
+    const placedWords: PlacedWord[] = [
+      {
+        id: 'w2',
+        number: 2,
+        term: '초국적사회',
+        definition: '현대 사회',
+        direction: 'down',
+        startRow: 1,
+        startCol: 3,
+        length: 5,
+        clueNumberText: '②',
+      },
+      {
+        id: 'w3',
+        number: 3,
+        term: '초상권',
+        definition: '얼굴 보호 권리',
+        direction: 'across',
+        startRow: 1,
+        startCol: 3,
+        length: 3,
+        clueNumberText: '③',
+      },
+    ];
+
+    const grid = buildBoardGrid(8, placedWords);
+    expect(grid[1][3].startNumber).toBe(2);
+    expect(grid[1][3].startNumberText).toBe('(2, 3)');
+  });
+
   it('generates identical boards when using the same seed', () => {
     const sampleWords: WordItem[] = [
       { id: '1', level: 1, term: '헌법', definition: '국가의 기본법', category: 'POLITICS' },
