@@ -1,5 +1,5 @@
 // Knowledge Crossword Offline Service Worker
-const CACHE_NAME = 'knowledge-crossword-v1';
+const CACHE_NAME = 'knowledge-crossword-v2';
 
 const STATIC_ASSETS = [
   '/',
@@ -8,6 +8,8 @@ const STATIC_ASSETS = [
   '/favicon.ico',
   '/icon-192.png',
   '/icon-512.png',
+  '/icon-192-maskable.png',
+  '/icon-512-maskable.png',
   '/apple-touch-icon.png',
   '/og-image.png',
 ];
