@@ -9,12 +9,27 @@ import {
   Share2,
   ChevronRight,
   CheckCircle2,
+  GraduationCap,
+  HelpCircle,
+  ExternalLink,
 } from 'lucide-react';
 import { UserSaveData } from '../../types/progress';
 import { CategoryId } from '../../types/puzzle';
 import { getCategoryMeta, CATEGORIES_REGISTRY } from '../../data/categoryRegistry';
+import { KNOWLEDGE_ARTICLES } from '../../data/knowledgeArticles';
 import { getKSTDateString, getMostRecentActiveGame } from '../../services/storageService';
 import { sounds } from '../../utils/audio';
+
+const CATEGORY_ARTICLE_SLUGS: Record<CategoryId, string> = {
+  POLITICS: 'politics',
+  SOCIETY: 'society',
+  CULTURE: 'culture',
+  SPORTS: 'sports',
+  KOREAN_HISTORY: 'korean-history',
+  WORLD_HISTORY: 'world-history',
+  MUSIC: 'music',
+  ART: 'art',
+};
 
 interface HomeScreenProps {
   saveData: UserSaveData;
@@ -58,6 +73,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const wrongWordsCount = saveData.wrongWords?.filter((w) => !w.mastered)?.length || 0;
 
   const isTodayCompleted = saveData.dailyChallenge?.completedDates?.includes(todayKST);
+  const featuredArticle = KNOWLEDGE_ARTICLES[activeCategory] || KNOWLEDGE_ARTICLES.POLITICS;
+  const featuredSlug = CATEGORY_ARTICLE_SLUGS[activeCategory] || 'politics';
 
   const handleShareClick = async () => {
     sounds.playKey();
@@ -317,6 +334,162 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Share2 className="w-3.5 h-3.5 text-sky-600" />
           <span>{copied ? '링크가 복사되었습니다!' : '친구에게 앱 공유하기'}</span>
         </button>
+      </section>
+
+      {/* 7. Featured Knowledge Column (Rich Editorial Content) */}
+      <article
+        aria-label="오늘의 추천 지식 칼럼"
+        className="w-full bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-3 text-slate-800"
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-1.5">
+            <GraduationCap className="w-4 h-4 text-[#0288d1]" />
+            <span className="text-xs font-black text-[#0288d1]">
+              {activeCatMeta.icon} {activeCatMeta.name} 심층 지식 칼럼
+            </span>
+          </div>
+          <a
+            href={`/articles/${featuredSlug}.html`}
+            className="text-[11px] font-bold text-sky-700 hover:underline inline-flex items-center gap-1 shrink-0"
+          >
+            <span>전체 칼럼 보기</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+
+        <div>
+          <h3 className="text-base font-black text-slate-900 leading-snug">
+            {featuredArticle.title}
+          </h3>
+          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+            {featuredArticle.summary}
+          </p>
+        </div>
+
+        <div className="space-y-2.5 pt-1">
+          {featuredArticle.sections.slice(0, 2).map((sec) => (
+            <div key={sec.heading} className="bg-slate-50/80 rounded-xl p-3 border border-slate-100">
+              <h4 className="text-xs font-black text-slate-800 mb-1">{sec.heading}</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">{sec.content}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-1">
+          <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+            핵심 개념 미리보기
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {featuredArticle.keyGlossary.slice(0, 4).map((g) => (
+              <div key={g.term} className="p-2.5 rounded-xl bg-sky-50/50 border border-sky-100">
+                <div className="text-xs font-black text-sky-900">{g.term}</div>
+                <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">{g.definition}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-1 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              sounds.playKey();
+              onNavigateTab('KNOWLEDGE');
+            }}
+            className="text-xs font-black text-sky-700 hover:text-sky-800 hover:underline cursor-pointer"
+          >
+            앱 내 지식백과 탭에서 더 보기 →
+          </button>
+          <a
+            href={`/articles/${featuredSlug}.html`}
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-black transition"
+          >
+            어휘 30선 &amp; 전문 읽기
+          </a>
+        </div>
+      </article>
+
+      {/* 8. 8대 지식 영역 백과 아카이브 */}
+      <section
+        aria-label="8대 지식 영역 심층 학습 백과"
+        className="w-full bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-3"
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 className="text-sm font-black text-slate-800">
+            8대 지식 영역별 교양 백과 (2,480개 어휘)
+          </h3>
+          <span className="text-[11px] text-slate-500 font-bold">국립국어원 표준 기준</span>
+        </div>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          지식 탐구 가로세로 낱말퍼즐은 초등·중고등 학생부터 성인, 취업 및 공무원 상식 시험 준비생까지 폭넓게 활용할 수 있도록 8개 핵심 교양 분야의 어휘와 배경지식을 체계적으로 정리해 제공합니다.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {CATEGORIES_REGISTRY.map((cat) => {
+            const art = KNOWLEDGE_ARTICLES[cat.id];
+            const slug = CATEGORY_ARTICLE_SLUGS[cat.id];
+            return (
+              <a
+                key={cat.id}
+                href={`/articles/${slug}.html`}
+                className="block p-3 rounded-xl bg-slate-50 hover:bg-sky-50/70 border border-slate-200/80 hover:border-sky-300 transition group"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-black text-slate-900 group-hover:text-sky-700">
+                    {cat.icon} {cat.name} · {art.title}
+                  </span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-sky-600 shrink-0" />
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-2">
+                  {art.summary}
+                </p>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 9. Learning Guide & FAQ */}
+      <section
+        aria-label="이용 안내 및 자주 묻는 질문"
+        className="w-full bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-3"
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+            <HelpCircle className="w-4 h-4 text-[#0288d1]" />
+            <span>낱말퍼즐 학습 가이드 &amp; 자주 묻는 질문</span>
+          </h3>
+          <a href="/guide.html" className="text-[11px] font-bold text-sky-700 hover:underline">
+            전체 가이드 →
+          </a>
+        </div>
+
+        <div className="space-y-2.5 text-xs text-slate-600 leading-relaxed">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <h4 className="font-black text-slate-800 mb-1">
+              Q. 초급·중급·고급 난이도는 어떻게 구성되어 있나요?
+            </h4>
+            <p>
+              Level 1~3(초급)은 8×8 격자에서 판당 10단어, Level 4~7(중급)은 10×10 격자에서 15단어, Level 8~10(고급)은 12×12 격자에서 20단어가 출제되어 총 240개 관문을 단계별로 정복할 수 있습니다.
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <h4 className="font-black text-slate-800 mb-1">
+              Q. 가로·세로가 겹치는 칸에서는 어떻게 힌트를 바꾸나요?
+            </h4>
+            <p>
+              같은 칸에서 가로·세로 단어가 함께 시작하거나 교차할 때는 해당 칸을 한 번 더 누르거나 상단 힌트 카드의 [→ 가로] / [↓ 세로] 버튼을 눌러 힌트와 입력 방향을 즉시 전환할 수 있습니다.
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <h4 className="font-black text-slate-800 mb-1">
+              Q. 틀린 단어는 어떻게 복습할 수 있나요?
+            </h4>
+            <p>
+              풀이 도중 틀리거나 초성 힌트를 사용한 어휘는 자동으로 오답노트에 기록됩니다. 상단 또는 하단의 ‘지식’ 탭에서 단어 카드와 복습 퀴즈를 통해 완벽하게 암기할 수 있습니다.
+            </p>
+          </div>
+        </div>
       </section>
     </main>
   );

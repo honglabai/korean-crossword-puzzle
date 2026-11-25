@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>서비스 소개 - 지식 탐구 가로세로 낱말퍼즐</title>
+  <meta name="description" content="8대 지식 영역 2,480개 어휘와 심층 교양 백과를 제공하는 지식 탐구 가로세로 낱말퍼즐의 기획 의도와 콘텐츠 검수 기준을 소개합니다." />
+  <meta name="author" content="honglabai" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="google-adsense-account" content="ca-pub-8675047967209162" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8675047967209162" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --primary: #0288d1;
+      --primary-dark: #01579b;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .site-header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 18px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .brand:hover { text-decoration: none; color: var(--primary); }
+    .top-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .top-nav a {
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: var(--text-muted);
+      background: #f1f5f9;
+    }
+    .top-nav a:hover, .top-nav a.active {
+      background: var(--primary);
+      color: #ffffff;
+      text-decoration: none;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #0288d1 0%, #01579b 65%, #0f172a 100%);
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 28px 24px;
+      margin-bottom: 24px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      line-height: 1.35;
+      font-weight: 900;
+    }
+    .hero p {
+      margin: 0;
+      font-size: 15px;
+      color: #e0f2fe;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      border-left: 4px solid var(--primary);
+      padding-left: 10px;
+    }
+    .card h3 {
+      margin: 18px 0 8px;
+      font-size: 17px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .card p {
+      margin: 0 0 12px;
+      color: #334155;
+      font-size: 15px;
+    }
+    .card ul, .card ol {
+      margin: 8px 0 14px;
+      padding-left: 20px;
+      color: #334155;
+      font-size: 15px;
+    }
+    .card li { margin-bottom: 6px; }
+    .glossary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .glossary-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .glossary-term {
+      font-weight: 900;
+      font-size: 15px;
+      color: var(--primary-dark);
+      margin-bottom: 4px;
+    }
+    .glossary-level {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 1px 7px;
+      border-radius: 6px;
+      margin-left: 6px;
+    }
+    .glossary-def {
+      font-size: 13.5px;
+      color: #475569;
+      margin: 0;
+      line-height: 1.55;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1px solid #bae6fd;
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: #0288d1;
+      color: #ffffff !important;
+      font-weight: 900;
+      font-size: 14px;
+      padding: 11px 20px;
+      border-radius: 12px;
+      text-decoration: none !important;
+      box-shadow: 0 2px 6px rgba(2, 136, 209, 0.25);
+    }
+    .cta-btn:hover { background: #0277bd; }
+    .sub-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .nav-pill {
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .nav-pill.active, .nav-pill:hover {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+      color: #0369a1;
+      text-decoration: none;
+    }
+    .site-footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      padding: 28px 16px;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .footer-inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 21px; }
+      .card { padding: 18px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="brand">
+        <span>🧩</span>
+        <span>지식 탐구 가로세로 낱말퍼즐</span>
+      </a>
+      <nav class="top-nav" aria-label="주요 메뉴">
+        <a href="/">퍼즐 홈</a>
+        <a href="/guide.html" class="">학습 가이드</a>
+        <a href="/articles/politics.html" class="">8대 지식 백과</a>
+        <a href="/about.html" class="active">서비스 소개</a>
+        <a href="/contact.html" class="">문의하기</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <div class="hero">
+      <span class="hero-badge">ℹ️ 서비스 소개 &amp; 편집 원칙</span>
+      <h1>지식 탐구 가로세로 낱말퍼즐 소개</h1>
+      <p>단순한 시간 보내기용 게임을 넘어, 대한민국 교양 상식과 어휘력을 체계적으로 기르는 교육용 웹 플랫폼입니다.</p>
+    </div>
+
+    <article class="card">
+      <h2>1. 서비스 기획 의도 및 비전</h2>
+      <p>디지털 시대의 짧은 영상과 파편화된 정보 속에서 깊이 있는 어휘력과 인문·사회적 문해력의 중요성은 더욱 커지고 있습니다. <strong>지식 탐구 가로세로 낱말퍼즐(honglabai)</strong>은 남녀노소 누구나 쉽고 재미있게 십자말풀이를 즐기면서 대한민국 핵심 교양 어휘를 자연스럽게 체득할 수 있도록 개발되었습니다.</p>
+      <p>단순히 글자만 맞추는 데 그치지 않고, 각 낱말이 가진 정확한 사전적 정의와 분야별 심층 배경 지식을 함께 제공하여 한 판을 풀 때마다 하나의 지식 영역을 깊이 이해하는 경험을 선사합니다.</p>
+    </article>
+
+    <article class="card">
+      <h2>2. 8대 지식 영역 및 2,480개 어휘 큐레이션</h2>
+      <p>본 플랫폼의 어휘 데이터베이스는 다음 8대 지식 영역별로 각 310단어씩, 총 <strong>2,480개 어휘</strong>로 구성되어 있습니다.</p>
+      <ul>
+        <li><strong>🏛️ 정치:</strong> 대한민국 헌법, 삼권분립, 의회민주주의, 선거제도 및 행정 원리</li>
+        <li><strong>⚖️ 사회:</strong> 법치주의, 사회계약론, 사회보장제도, 디지털 미디어와 현대 사회 쟁점</li>
+        <li><strong>🎭 문화:</strong> 유네스코 세계유산, 한국 전통문화, 기록유산 및 현대 문화예술</li>
+        <li><strong>⚽ 스포츠:</strong> 올림픽 정신, 경기 규칙, 스포츠 과학 및 세이버메트릭스</li>
+        <li><strong>📜 한국사:</strong> 고조선부터 삼국·고려·조선, 근현대사에 이르는 역사적 사건과 인물</li>
+        <li><strong>🌍 세계사:</strong> 세계 4대 문명, 서양사 및 동양사의 주요 혁명과 국제 질서</li>
+        <li><strong>🎵 음악:</strong> 한국 전통 국악 이론, 서양 클래식 음악사, 화성학 및 악기 편성</li>
+        <li><strong>🎨 미술:</strong> 한국화·풍속화부터 르네상스, 인상주의, 현대 미술 사조까지</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h2>3. 콘텐츠 품질 관리 및 검수 기준</h2>
+      <p>지식 탐구 낱말퍼즐은 정확하고 신뢰할 수 있는 교육 콘텐츠 제공을 최우선 가치로 삼습니다.</p>
+      <ul>
+        <li><strong>공신력 있는 기준 준수:</strong> 국립국어원 표준국어대사전, 대한민국 헌법 및 주요 법령, 교육부 기본 교과 과정을 기준으로 단어와 풀이를 작성합니다.</li>
+        <li><strong>지속적인 검수 및 업데이트:</strong> 사용자 피드백을 바탕으로 어휘의 적절성과 해설의 명료성을 상시 점검하고 개선합니다.</li>
+        <li><strong>건전한 웹 환경:</strong> 과도한 팝업이나 이용을 방해하는 광고 배치를 지양하며, Google AdSense 프로그램 정책과 웹 접근성 지침을 준수합니다.</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h2>4. 운영 정보</h2>
+      <ul>
+        <li><strong>서비스명:</strong> 지식 탐구 가로세로 낱말퍼즐</li>
+        <li><strong>개발 및 운영:</strong> honglabai</li>
+        <li><strong>공식 문의 이메일:</strong> <a href="mailto:honglabai@gmail.com">honglabai@gmail.com</a></li>
+      </ul>
+    </article>
+  
+    <section class="card" aria-label="8대 지식 영역 백과 바로가기">
+      <h2>8대 지식 영역 심층 칼럼 둘러보기</h2>
+      <p>대한민국 필수 교양 8개 영역의 배경 지식과 핵심 어휘 해설을 확인해 보세요.</p>
+      <div class="sub-nav">
+        <a href="/articles/politics.html" class="nav-pill ">🏛️ 정치</a>
+        <a href="/articles/society.html" class="nav-pill ">⚖️ 사회</a>
+        <a href="/articles/culture.html" class="nav-pill ">🎭 문화</a>
+        <a href="/articles/sports.html" class="nav-pill ">⚽ 스포츠</a>
+        <a href="/articles/korean-history.html" class="nav-pill ">📜 한국사</a>
+        <a href="/articles/world-history.html" class="nav-pill ">🌍 세계사</a>
+        <a href="/articles/music.html" class="nav-pill ">🎵 음악</a>
+        <a href="/articles/art.html" class="nav-pill ">🎨 미술</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="/">홈 (낱말퍼즐 시작)</a>
+        <a href="/guide.html">학습 가이드</a>
+        <a href="/about.html">서비스 소개</a>
+        <a href="/privacy.html">개인정보처리방침</a>
+        <a href="/terms.html">이용약관</a>
+        <a href="/contact.html">문의하기</a>
+      </div>
+      <p style="margin: 0 0 6px;">운영자: honglabai | 문의: <a href="mailto:honglabai@gmail.com">honglabai@gmail.com</a></p>
+      <p style="margin: 0;">© 2026 지식 탐구 가로세로 낱말퍼즐 (honglabai). All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

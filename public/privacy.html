@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>개인정보처리방침 - 지식 탐구 가로세로 낱말퍼즐</title>
+  <meta name="description" content="지식 탐구 가로세로 낱말퍼즐의 개인정보처리방침, 로컬 스토리지 사용 안내 및 Google AdSense 쿠키 정책입니다." />
+  <meta name="author" content="honglabai" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="google-adsense-account" content="ca-pub-8675047967209162" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8675047967209162" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --primary: #0288d1;
+      --primary-dark: #01579b;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .site-header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 18px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .brand:hover { text-decoration: none; color: var(--primary); }
+    .top-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .top-nav a {
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: var(--text-muted);
+      background: #f1f5f9;
+    }
+    .top-nav a:hover, .top-nav a.active {
+      background: var(--primary);
+      color: #ffffff;
+      text-decoration: none;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #0288d1 0%, #01579b 65%, #0f172a 100%);
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 28px 24px;
+      margin-bottom: 24px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      line-height: 1.35;
+      font-weight: 900;
+    }
+    .hero p {
+      margin: 0;
+      font-size: 15px;
+      color: #e0f2fe;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      border-left: 4px solid var(--primary);
+      padding-left: 10px;
+    }
+    .card h3 {
+      margin: 18px 0 8px;
+      font-size: 17px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .card p {
+      margin: 0 0 12px;
+      color: #334155;
+      font-size: 15px;
+    }
+    .card ul, .card ol {
+      margin: 8px 0 14px;
+      padding-left: 20px;
+      color: #334155;
+      font-size: 15px;
+    }
+    .card li { margin-bottom: 6px; }
+    .glossary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .glossary-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .glossary-term {
+      font-weight: 900;
+      font-size: 15px;
+      color: var(--primary-dark);
+      margin-bottom: 4px;
+    }
+    .glossary-level {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 1px 7px;
+      border-radius: 6px;
+      margin-left: 6px;
+    }
+    .glossary-def {
+      font-size: 13.5px;
+      color: #475569;
+      margin: 0;
+      line-height: 1.55;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1px solid #bae6fd;
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: #0288d1;
+      color: #ffffff !important;
+      font-weight: 900;
+      font-size: 14px;
+      padding: 11px 20px;
+      border-radius: 12px;
+      text-decoration: none !important;
+      box-shadow: 0 2px 6px rgba(2, 136, 209, 0.25);
+    }
+    .cta-btn:hover { background: #0277bd; }
+    .sub-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .nav-pill {
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .nav-pill.active, .nav-pill:hover {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+      color: #0369a1;
+      text-decoration: none;
+    }
+    .site-footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      padding: 28px 16px;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .footer-inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 21px; }
+      .card { padding: 18px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="brand">
+        <span>🧩</span>
+        <span>지식 탐구 가로세로 낱말퍼즐</span>
+      </a>
+      <nav class="top-nav" aria-label="주요 메뉴">
+        <a href="/">퍼즐 홈</a>
+        <a href="/guide.html" class="">학습 가이드</a>
+        <a href="/articles/politics.html" class="">8대 지식 백과</a>
+        <a href="/about.html" class="">서비스 소개</a>
+        <a href="/contact.html" class="">문의하기</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <div class="hero">
+      <span class="hero-badge">🔒 개인정보보호 &amp; 광고 정책</span>
+      <h1>개인정보처리방침</h1>
+      <p>지식 탐구 가로세로 낱말퍼즐(이하 "본 서비스")은 이용자의 개인정보를 소중히 보호하며 관련 법령 및 Google AdSense 정책을 준수합니다.</p>
+    </div>
+
+    <article class="card">
+      <h2>1. 수집하는 개인정보 및 저장 방식</h2>
+      <p>본 서비스는 회원가입이나 로그인을 요구하지 않으며, 이용자의 성명, 주민등록번호, 전화번호 등 개인을 식별할 수 있는 정보를 서버에 수집하거나 저장하지 않습니다.</p>
+      <p>퍼즐 풀이 진행 상황, 정답 기록, 연속 출석일, 환경설정(소리·테마·글자 크기 등)은 전적으로 이용자 본인의 웹 브라우저 내 <strong>로컬 스토리지(LocalStorage)</strong>에만 저장되며, 언제든 브라우저 설정 또는 앱 내 '설정 &gt; 데이터 초기화' 기능을 통해 삭제할 수 있습니다.</p>
+    </article>
+
+    <article class="card">
+      <h2>2. 쿠키(Cookie) 및 Google AdSense 맞춤형 광고 안내</h2>
+      <p>본 서비스는 무료 서비스 유지 및 운영을 위해 <strong>Google AdSense</strong>를 통해 광고를 게재합니다.</p>
+      <ul>
+        <li>Google을 포함한 제3자 공급업체는 쿠키(Cookie)를 사용하여 이용자가 본 웹사이트 또는 다른 웹사이트에 과거에 방문한 기록을 바탕으로 맞춤형 광고를 게재합니다.</li>
+        <li>Google의 광고 쿠키(DoubleClick DART 쿠키 등) 사용으로 인해 Google 및 파트너는 이용자의 본 사이트 및 인터넷상의 다른 사이트 방문 기록을 기반으로 적절한 광고를 제공할 수 있습니다.</li>
+        <li>이용자는 <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">Google 광고 설정(My Ad Center)</a> 페이지를 방문하여 맞춤형 광고를 사용 중지(Opt-out)할 수 있습니다.</li>
+        <li>또한 <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">www.aboutads.info</a>를 방문하여 제3자 공급업체의 맞춤형 광고용 쿠키 사용을 거부할 수 있습니다.</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h2>3. 접속 로그 및 통계 분석</h2>
+      <p>서비스 안정성 확보와 오류 진단을 위해 호스팅 인프라(Vercel) 수준에서 IP 주소(비식별화 처리), 브라우저 유형, 접속 일시 등의 기술적 접속 로그가 일시적으로 처리될 수 있습니다. 이는 서비스 보안 및 트래픽 최적화 목적 외에는 사용되지 않습니다.</p>
+    </article>
+
+    <article class="card">
+      <h2>4. 아동의 개인정보 보호</h2>
+      <p>본 서비스는 만 14세 미만 아동의 개인정보를 의도적으로 수집하지 않습니다. 만약 보호자께서 아동이 개인정보를 제공했다고 판단하시는 경우 아래 문의처로 연락해 주시면 즉시 확인 및 필요한 조치를 취하겠습니다.</p>
+    </article>
+
+    <article class="card">
+      <h2>5. 개인정보 보호책임자 및 문의처</h2>
+      <ul>
+        <li><strong>운영 주체:</strong> honglabai</li>
+        <li><strong>이메일:</strong> <a href="mailto:honglabai@gmail.com">honglabai@gmail.com</a></li>
+        <li><strong>시행일자:</strong> 2026년 11월 1일 (최종 개정: 2026년 11월 25일)</li>
+      </ul>
+    </article>
+  
+    <section class="card" aria-label="8대 지식 영역 백과 바로가기">
+      <h2>8대 지식 영역 심층 칼럼 둘러보기</h2>
+      <p>대한민국 필수 교양 8개 영역의 배경 지식과 핵심 어휘 해설을 확인해 보세요.</p>
+      <div class="sub-nav">
+        <a href="/articles/politics.html" class="nav-pill ">🏛️ 정치</a>
+        <a href="/articles/society.html" class="nav-pill ">⚖️ 사회</a>
+        <a href="/articles/culture.html" class="nav-pill ">🎭 문화</a>
+        <a href="/articles/sports.html" class="nav-pill ">⚽ 스포츠</a>
+        <a href="/articles/korean-history.html" class="nav-pill ">📜 한국사</a>
+        <a href="/articles/world-history.html" class="nav-pill ">🌍 세계사</a>
+        <a href="/articles/music.html" class="nav-pill ">🎵 음악</a>
+        <a href="/articles/art.html" class="nav-pill ">🎨 미술</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="/">홈 (낱말퍼즐 시작)</a>
+        <a href="/guide.html">학습 가이드</a>
+        <a href="/about.html">서비스 소개</a>
+        <a href="/privacy.html">개인정보처리방침</a>
+        <a href="/terms.html">이용약관</a>
+        <a href="/contact.html">문의하기</a>
+      </div>
+      <p style="margin: 0 0 6px;">운영자: honglabai | 문의: <a href="mailto:honglabai@gmail.com">honglabai@gmail.com</a></p>
+      <p style="margin: 0;">© 2026 지식 탐구 가로세로 낱말퍼즐 (honglabai). All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

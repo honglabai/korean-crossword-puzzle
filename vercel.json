@@ -45,6 +45,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?!assets/|.*\\..*).*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|about|privacy|terms|contact|guide|articles/|.*\\..*).*)", "destination": "/index.html" }
   ]
 }
